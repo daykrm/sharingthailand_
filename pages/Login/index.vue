@@ -44,6 +44,7 @@ import axios from 'axios'
 export default {
   name: 'LoginComponent',
   layout: 'login',
+  middleware: ['isAuth'],
   data() {
     return {
       login: {
@@ -54,20 +55,8 @@ export default {
       prefix: null,
     }
   },
-  mounted() {
-    this.checkAuth()
-  },
+  mounted() {},
   methods: {
-    checkAuth() {
-      this.isAdmin = this.$cookies.get('isAdmin')
-      if (this.isAdmin != null) {
-        if (this.isAdmin) {
-          this.$router.push({ path: '/admin' })
-        } else {
-          this.$router.push({ path: '/user' })
-        }
-      }
-    },
     async userLogin() {
       const data = {
         func: 'login',
@@ -76,7 +65,6 @@ export default {
       }
       await axios.post('/api', data).then((res) => {
         if (res.data == 'success') {
-          alert('ok')
           this.isAdmin = this.$cookies.get('isAdmin')
           if (this.isAdmin) {
             this.$router.push({ path: '/admin' })

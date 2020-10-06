@@ -46,23 +46,25 @@ export default {
   layout: 'login',
   data() {
     return {
-      login : {
-          username : '',
-          password : ''
-      }
+      login: {
+        username: '',
+        password: '',
+      },
+      user_data: {},
     }
   },
   mounted() {},
   methods: {
-    userLogin() {
+    async userLogin() {
       const data = {
         func: 'login',
         username: this.login.username,
         password: this.login.password,
       }
-      axios.post('/api', data).then((res) => {
+      await axios.post('/api', data).then((res) => {
         if (res.data == 'success') {
           alert('ok')
+          this.user_data = this.$cookies.get('user_data')
         } else {
           alert(res.data)
         }

@@ -42,7 +42,7 @@ export default {
     // https://go.nuxtjs.dev/pwa
     '@nuxtjs/pwa',
     '@nuxtjs/proxy',
-    '@nuxtjs/auth'
+    'cookie-universal-nuxt',
   ],
 
   // Axios module configuration (https://go.nuxtjs.dev/config-axios)
@@ -56,7 +56,7 @@ export default {
       pathRewrite: {
         '^/api' : '/'
         }
-      }
+      },
   },
 
   // Vuetify module configuration (https://go.nuxtjs.dev/config-vuetify)

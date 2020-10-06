@@ -50,11 +50,24 @@ export default {
         username: '',
         password: '',
       },
-      user_data: {},
+      isAdmin: null,
+      prefix: null,
     }
   },
-  mounted() {},
+  mounted() {
+    this.checkAuth()
+  },
   methods: {
+    checkAuth() {
+      this.isAdmin = this.$cookies.get('isAdmin')
+      if (this.isAdmin != null) {
+        if (this.isAdmin) {
+          this.$router.push({ path: '/admin' })
+        } else {
+          this.$router.push({ path: '/user' })
+        }
+      }
+    },
     async userLogin() {
       const data = {
         func: 'login',
@@ -64,7 +77,12 @@ export default {
       await axios.post('/api', data).then((res) => {
         if (res.data == 'success') {
           alert('ok')
-          this.user_data = this.$cookies.get('user_data')
+          this.isAdmin = this.$cookies.get('isAdmin')
+          if (this.isAdmin) {
+            this.$router.push({ path: '/admin' })
+          } else {
+            this.$router.push({ path: '/user' })
+          }
         } else {
           alert(res.data)
         }

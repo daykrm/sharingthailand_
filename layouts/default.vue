@@ -90,8 +90,12 @@
 
 <script>
 export default {
+  mounted(){
+    this.isAdmin = this.$cookies.get('isAdmin')
+  },
   data () {
     return {
+      isAdmin : null,
       clipped: false,
       drawer: false,
       fixed: false,

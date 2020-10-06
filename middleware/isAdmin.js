@@ -3,8 +3,13 @@ export default function ({ store, redirect }) {
   // If the user is not authenticated
   let token = Cookie.get('isAdmin')
   const userIsLoggedIn = token != null //cookie ada
-  const userNeedLogin = token == null //cookie gak ada
-  if (userNeedLogin) {
-    return redirect('/login')
+  //   const userNeedLogin = token == null //cookie gak ada
+  //   if (userNeedLogin) {
+  //     return redirect('/login').catch(()=>{})
+  //   }
+  if (userIsLoggedIn) {
+    if (token != 1) {
+      return redirect('/login')
+    }
   }
 }

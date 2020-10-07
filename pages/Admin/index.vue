@@ -159,7 +159,7 @@ export default {
       },
       dialogDelete: false,
       editID: '',
-      loading : true,
+      loading : false,
       absolute:true
     }
   },
@@ -222,6 +222,7 @@ export default {
         alert('กรุรากรอกข้อมูลให้ครบถ้วน')
       } else {
         //alert('ok')
+        this.loading = true
         const data = {
           func: 'add_user',
           ID: form.ID,
@@ -240,6 +241,7 @@ export default {
           } else {
             alert(res.data)
           }
+          this.loading = false
         })
         this.dialog = false
       }

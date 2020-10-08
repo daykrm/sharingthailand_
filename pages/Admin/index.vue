@@ -8,7 +8,13 @@
         <v-row>
           <v-col cols="4" class="mt-3">
             <v-dialog v-model="dialog" persistent max-width="600px">
-              <center><v-progress-circular v-show="loading"  indeterminate color="blue"></v-progress-circular></center>
+              <center>
+                <v-progress-circular
+                  v-show="loading"
+                  indeterminate
+                  color="blue"
+                ></v-progress-circular>
+              </center>
               <v-overlay :value="loading" :absolute="absolute"></v-overlay>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn color="teal lighten-1" dark v-bind="attrs" v-on="on">
@@ -159,8 +165,8 @@ export default {
       },
       dialogDelete: false,
       editID: '',
-      loading : false,
-      absolute:true
+      loading: false,
+      absolute: true,
     }
   },
   mounted() {
@@ -209,7 +215,7 @@ export default {
     closeDelete() {
       this.dialogDelete = false
     },
-    submitForm() {
+    async submitForm() {
       var form = this.data
       if (
         form.name == '' ||
@@ -233,16 +239,16 @@ export default {
           password: form.password,
           prefix_db: form.prefix_db,
         }
-        axios.post('/api', data).then((res) => {
+        await axios.post('/api', data).then((res) => {
           if (res.data == 'success') {
-            //alert('เพิ่มข้อมูลสำเร็จ')
-            this.resetData()
-            this.getUser()
+            alert('เพิ่มข้อมูลสำเร็จ')
           } else {
             alert(res.data)
           }
-          this.loading = false
         })
+        this.resetData()
+        this.getUser()
+        this.loading = false
         this.dialog = false
       }
     },

@@ -51,6 +51,7 @@
 
 <script>
 export default {
+  name:'DefaultTemplate',
   mounted() {
     this.checkAdmin()
   },
@@ -83,7 +84,7 @@ export default {
         {
           icon: 'mdi-office-building-outline',
           title: 'ตั้งค่าข้อมูลบริษัท',
-          to: '/User',
+          to: '/User/Company',
         },
         {
           icon: 'mdi-account-plus-outline',

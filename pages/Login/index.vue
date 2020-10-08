@@ -8,7 +8,7 @@
               <v-toolbar color="primary" dark flat>
                 <v-toolbar-title>Sharing Thailand</v-toolbar-title>
               </v-toolbar>
-              <v-card-text>
+              <v-card-text @keyup.enter="userLogin">
                 <v-form>
                   <v-text-field
                     label="Username"

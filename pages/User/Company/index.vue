@@ -3,6 +3,7 @@
     <v-row no-gutters>
       <v-col cols="12" class="text-center">
         <h2>ตั้งค่าข้อมูลบริษัท</h2>
+        <img :src="img"/>
       </v-col>
       <v-col cols="12" class="mt-5">
         <v-row>
@@ -88,10 +89,13 @@ export default {
       email: '',
       myCroppa: {},
       img_logo: null,
+      img: null,
     }
   },
   mounted() {
     this.getTheme()
+    this.getCompanySetting()
+    this.test()
   },
   methods: {
     getTheme() {
@@ -99,6 +103,17 @@ export default {
       axios.post('/api', data).then((res) => {
         //console.log(res.data)
         this.items = res.data
+      })
+    },
+    getCompanySetting() {
+      const data = { func: 'get_company', db: this.db }
+      axios.post('/api', data).then((res) => {
+        //console.log(res.data.name);
+        this.app_color = res.data.theme_id
+        this.company_name = res.data.name
+        this.address = res.data.address
+        this.phone = res.data.phone
+        this.email = res.data.email
       })
     },
     validate() {
@@ -151,12 +166,18 @@ export default {
         if (res.data == 'success') {
           alert('บันทึกข้อมูลเสร็จสิ้น')
         } else {
-          console.log(res.data);
+          console.log(res.data)
         }
       })
     },
     submitData() {
       this.recodeDoc()
+    },
+    test() {
+      const data = { func: 'test' }
+      axios.post('/api', data).then((res) => {
+        this.img = "data:image/jpg;charset=utf8;base64," + res.data
+      })
     },
   },
 }

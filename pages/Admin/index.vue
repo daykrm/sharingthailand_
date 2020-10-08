@@ -242,14 +242,14 @@ export default {
         await axios.post('/api', data).then((res) => {
           if (res.data == 'success') {
             alert('เพิ่มข้อมูลสำเร็จ')
+            this.resetData()
+            this.dialog = false
           } else {
             alert(res.data)
           }
         })
-        this.resetData()
         this.getUser()
         this.loading = false
-        this.dialog = false
       }
     },
   },

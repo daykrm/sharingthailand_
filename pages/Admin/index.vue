@@ -174,8 +174,8 @@ export default {
   },
   methods: {
     getUser() {
-      const data = { func: 'get_user' }
-      axios.post('/api', data).then((res) => {
+      //const data = { func: 'get_user' }
+      axios.get('/api/user').then((res) => {
         this.items = res.data
       })
     },
@@ -202,8 +202,15 @@ export default {
     },
     deleteItemConfirm() {
       var item = this.editID
-      const data = { func: 'del_user', ID: item }
-      axios.post('/api', data).then((res) => {
+      //const data = { func: 'del_user', ID: item }
+      // axios.post(`/api/deleteuser`, { id: item }).then((res) => {
+      //   if (res.data == 'success') {
+      //     this.getUser()
+      //   } else {
+      //     res.data
+      //   }
+      // })
+      axios.delete(`/api/user/${item}`).then((res) => {
         if (res.data == 'success') {
           this.getUser()
         } else {
@@ -230,8 +237,6 @@ export default {
         //alert('ok')
         this.loading = true
         const data = {
-          func: 'add_user',
-          ID: form.ID,
           name: form.name,
           company_name: form.company_name,
           phone: form.phone,
@@ -239,16 +244,30 @@ export default {
           password: form.password,
           prefix_db: form.prefix_db,
         }
-        await axios.post('/api', data).then((res) => {
-          if (res.data == 'success') {
-            alert('เพิ่มข้อมูลสำเร็จ')
-            this.resetData()
-            this.dialog = false
-          } else {
-            alert(res.data)
-          }
-        })
-        this.getUser()
+        if (form.ID == '') {
+          // New User
+          await axios.post('/api/user', data).then((res) => {
+            if (res.data == 'insert success') {
+              alert('เพิ่มข้อมูลสำเร็จ')
+              this.resetData()
+              this.dialog = false
+            } else {
+              alert(res.data)
+            }
+          })
+        } else {
+          // Update User
+          await axios.put(`/api/user/${form.ID}`, data).then((res) => {
+            if (res.data == 'update success') {
+              alert('แก้ไขข้อมูลสำเร็จ')
+              this.resetData()
+              this.dialog = false
+            } else {
+              alert(res.data)
+            }
+          })
+        }
+        await this.getUser()
         this.loading = false
       }
     },

@@ -55,17 +55,20 @@ export default {
       prefix: null,
     }
   },
-  mounted() {
-  },
+  mounted() {},
   methods: {
     async userLogin() {
       const data = {
-        func: 'login',
+        //func: 'login',
         username: this.login.username,
         password: this.login.password,
       }
-      await axios.post('/api', data).then((res) => {
-        if (res.data == 'success') {
+      await axios.post('/api/login', data).then((res) => {
+        if (res.data.message == 'success') {
+          this.$cookies.set('isAdmin', res.data.data, {
+            path: '/',
+            maxAge: 60 * 60 * 24 * 7,
+          })
           this.isAdmin = this.$cookies.get('isAdmin')
           if (this.isAdmin) {
             this.$router.push({ path: '/admin' })

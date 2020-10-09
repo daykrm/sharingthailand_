@@ -48,13 +48,13 @@ export default {
 
   // Axios module configuration (https://go.nuxtjs.dev/config-axios)
   axios: {
-    //baseURL: 'https://sharingthailand.com'
+    baseURL: 'https://sharingthailand.com'
   },
 
   proxy: {
     '/api': {
-      //target: 'https://sharingthailand.com',
-      target: 'https://sharingthailand.com/api',
+      target: 'https://sharingthailand.com',
+      //target: 'https://sharingthailand.com/api',
       pathRewrite: {
         '^/api' : '/'
         }

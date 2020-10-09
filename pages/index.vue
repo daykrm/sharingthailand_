@@ -1,5 +1,13 @@
 <template>
-  <div></div>
+  <div>
+    <v-file-input
+      accept="image/*"
+      v-model="img_logo"
+      label="Logo"
+      ref="img_logo"
+    ></v-file-input>
+    <v-btn color="primary" @click="test">Upload</v-btn>
+  </div>
 </template>
 
 <script>
@@ -12,14 +20,35 @@ export default {
     Logo,
     VuetifyLogo,
   },
+  data() {
+    return {
+      img_logo: null,
+    }
+  },
   mounted() {
-    this.test()
+    this.testLogin()
+    //this.getUser()
   },
   methods: {
     test() {
-      axios.get('/api').then((res) => {
+      let settings = { headers: { 'content-type': 'multipart/form-data' } }
+      var formData = new FormData()
+      formData.append('img_logo', this.img_logo)
+      axios.post('/api/upload', formData, settings).then((res) => {
         console.log(res.data)
       })
+    },
+    getUser() {
+      axios.get('/api/user').then((res) => {
+        console.log(res.data)
+      })
+    },
+    testLogin() {
+      axios
+        .get('/api')
+        .then((res) => {
+          console.log(res.data)
+        })
     },
   },
 }

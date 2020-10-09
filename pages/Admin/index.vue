@@ -200,7 +200,7 @@ export default {
       }
       this.dialog = false
     },
-    deleteItemConfirm() {
+    async deleteItemConfirm() {
       var item = this.editID
       //const data = { func: 'del_user', ID: item }
       // axios.post(`/api/deleteuser`, { id: item }).then((res) => {
@@ -210,14 +210,14 @@ export default {
       //     res.data
       //   }
       // })
-      axios.delete(`/api/user/${item}`).then((res) => {
-        if (res.data == 'success') {
-          this.getUser()
+      await axios.delete(`/api/user/${item}`).then((res) => {
+        if (res.status == 200) {
+          this.closeDelete()
         } else {
-          res.data
+          alert(res.data.message)
         }
       })
-      this.closeDelete()
+      this.getUser()
     },
     closeDelete() {
       this.dialogDelete = false
@@ -247,23 +247,23 @@ export default {
         if (form.ID == '') {
           // New User
           await axios.post('/api/user', data).then((res) => {
-            if (res.data == 'insert success') {
+            if (res.status == 200) {
               alert('เพิ่มข้อมูลสำเร็จ')
               this.resetData()
               this.dialog = false
             } else {
-              alert(res.data)
+              alert(res.data.message)
             }
           })
         } else {
           // Update User
           await axios.put(`/api/user/${form.ID}`, data).then((res) => {
-            if (res.data == 'update success') {
+            if (res.status == 200) {
               alert('แก้ไขข้อมูลสำเร็จ')
               this.resetData()
               this.dialog = false
             } else {
-              alert(res.data)
+              alert(res.data.message)
             }
           })
         }

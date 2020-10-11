@@ -2,7 +2,7 @@
   <div>
     <v-file-input
       accept="image/*"
-      v-model="img_logo"
+      v-model="images"
       label="Logo"
       ref="img_logo"
     ></v-file-input>
@@ -22,20 +22,23 @@ export default {
   },
   data() {
     return {
-      img_logo: null,
+      images: null,
+      testImg : null
     }
   },
   mounted() {
-    this.testLogin()
+    //this.testLogin()
     //this.getUser()
   },
   methods: {
     test() {
       let settings = { headers: { 'content-type': 'multipart/form-data' } }
       var formData = new FormData()
-      formData.append('img_logo', this.img_logo)
+      formData.append('images', this.images)
       axios.post('/api/upload', formData, settings).then((res) => {
-        console.log(res.data)
+        console.log(res.data.images);
+        this.testImg = res.data.images
+        // console.log(res.data)  // img path
       })
     },
     getUser() {

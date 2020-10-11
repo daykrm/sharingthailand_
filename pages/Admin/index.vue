@@ -202,14 +202,6 @@ export default {
     },
     async deleteItemConfirm() {
       var item = this.editID
-      //const data = { func: 'del_user', ID: item }
-      // axios.post(`/api/deleteuser`, { id: item }).then((res) => {
-      //   if (res.data == 'success') {
-      //     this.getUser()
-      //   } else {
-      //     res.data
-      //   }
-      // })
       await axios.delete(`/api/user/${item}`).then((res) => {
         if (res.status == 200) {
           this.closeDelete()

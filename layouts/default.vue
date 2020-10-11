@@ -89,7 +89,7 @@ export default {
         {
           icon: 'mdi-account-plus-outline',
           title: 'ตั้งค่าพนักงาน',
-          to: '/User',
+          to: '/User/Marketing',
         },
         {
           icon: 'mdi-cog-outline',

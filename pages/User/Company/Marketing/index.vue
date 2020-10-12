@@ -30,22 +30,15 @@
                     <v-row>
                       <v-col cols="12">
                         <v-text-field
-                          label="ชื่อบริษัท"
-                          v-model="data.company_name"
-                          required
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12">
-                        <v-text-field
                           label="ชื่อ"
-                          v-model="data.name"
+                          v-model="data.firstname"
                           required
                         ></v-text-field>
                       </v-col>
                       <v-col cols="12">
                         <v-text-field
                           label="นามสกุล"
-                          v-model="data.phone"
+                          v-model="data.lastname"
                           required
                         ></v-text-field>
                       </v-col>
@@ -138,28 +131,27 @@ export default {
     return {
       filter: '',
       columns: [
-        { text: 'ID', value: 'ID', align: 'start', sortable: false },
-        { text: 'ผู้ดูแล', value: 'name' },
-        { text: 'ชื่อบริษัท', value: 'company_name' },
-        { text: 'เบอร์โทร', value: 'phone' },
-        { text: 'Database', value: 'prefix_db' },
+        { text: 'ID', value: 'user_id', align: 'start', sortable: false },
+        { text: 'ชื่อ', value: 'firstname' },
+        { text: 'นามกสุล', value: 'lastname' },
+        { text: 'username', value: 'username' },
         { text: 'จัดการ', value: 'actions', sortable: false },
       ],
       items: [],
       dialog: false,
       data: {
-        ID: '',
-        name: '',
-        company_name: '',
-        phone: '',
+        user_id: '',
+        firstname: '',
+        lastname: '',
         username: '',
         password: '',
-        prefix_db: '',
+        status: 0,
       },
       dialogDelete: false,
       editID: '',
       loading: false,
       absolute: true,
+      db: window.location.hostname.toString().split('.')[0],
     }
   },
   mounted() {
@@ -168,7 +160,7 @@ export default {
   methods: {
     getUser() {
       //const data = { func: 'get_user' }
-      axios.get('/api/user').then((res) => {
+      axios.get(`/api/marketing/${this.db}`).then((res) => {
         this.items = res.data
       })
     },
@@ -179,29 +171,32 @@ export default {
     },
     deleteItem(item) {
       this.dialogDelete = true
-      this.editID = item.ID
+      this.editID = item.user_id
     },
     resetData() {
       this.data = {
-        ID: '',
-        name: '',
-        company_name: '',
-        phone: '',
+        user_id: '',
+        firstname: '',
+        lastname: '',
         username: '',
         password: '',
-        prefix_db: '',
+        status: 0,
       }
       this.dialog = false
     },
     async deleteItemConfirm() {
       var item = this.editID
-      await axios.delete(`/api/user/${item}`).then((res) => {
-        if (res.status == 200) {
-          this.closeDelete()
-        } else {
-          alert(res.data.message)
-        }
-      })
+      const data = {user_id : item}
+      await axios
+        .delete(`/api/marketing/${this.db}/${item}`)
+        .then((res) => {
+          if (res.status == 200) {
+            this.closeDelete()
+          }
+        })
+        .catch((err) => {
+          alert(err.response.data.message)
+        })
       this.getUser()
     },
     closeDelete() {
@@ -210,47 +205,53 @@ export default {
     async submitForm() {
       var form = this.data
       if (
-        form.name == '' ||
-        form.company_name == '' ||
-        form.phone == '' ||
+        form.firstname == '' ||
+        form.lastname == '' ||
         form.username == '' ||
-        form.password == '' ||
-        form.prefix_db == ''
+        form.password == ''
       ) {
         alert('กรุรากรอกข้อมูลให้ครบถ้วน')
       } else {
         //alert('ok')
         this.loading = true
         const data = {
-          name: form.name,
-          company_name: form.company_name,
-          phone: form.phone,
+          firstname: form.firstname,
+          lastname: form.lastname,
           username: form.username,
           password: form.password,
-          prefix_db: form.prefix_db,
+          status: form.status,
         }
-        if (form.ID == '') {
+        if (form.user_id == '') {
           // New User
-          await axios.post('/api/user', data).then((res) => {
-            if (res.status == 200) {
-              alert('เพิ่มข้อมูลสำเร็จ')
-              this.resetData()
-              this.dialog = false
-            } else {
-              alert(res.data.message)
-            }
-          })
+          console.log(this.db)
+          await axios
+            .post(`/api/marketing/${this.db}`, data)
+            .then((res) => {
+              if (res.status == 200) {
+                alert('เพิ่มข้อมูลสำเร็จ')
+                this.resetData()
+                this.dialog = false
+              } else {
+                alert(res.data.message)
+              }
+            })
+            .catch((err) => {
+              alert(err.response.data.message)
+            })
         } else {
           // Update User
-          await axios.put(`/api/user/${form.ID}`, data).then((res) => {
-            if (res.status == 200) {
-              alert('แก้ไขข้อมูลสำเร็จ')
-              this.resetData()
-              this.dialog = false
-            } else {
-              alert(res.data.message)
-            }
-          })
+          await axios
+            .put(`/api/marketing/${this.db}/${this.data.user_id}`, this.data)
+            .then((res) => {
+              if (res.status == 200) {
+                alert('แก้ไขข้อมูลสำเร็จ')
+                this.resetData()
+                this.dialog = false
+              }
+            })
+            .catch((err) => {
+              alert(err.response.data.message)
+            })
         }
         await this.getUser()
         this.loading = false

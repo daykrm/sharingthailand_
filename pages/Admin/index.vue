@@ -175,9 +175,14 @@ export default {
   methods: {
     getUser() {
       //const data = { func: 'get_user' }
-      axios.get('/api/user').then((res) => {
-        this.items = res.data
-      })
+      axios
+        .get('/api/user')
+        .then((res) => {
+          this.items = res.data
+        })
+        .catch((err) => {
+          console.log(err.response.data.message)
+        })
     },
     editItem(item) {
       //console.log('edit', item)
@@ -202,13 +207,16 @@ export default {
     },
     async deleteItemConfirm() {
       var item = this.editID
-      await axios.delete(`/api/user/${item}`).then((res) => {
-        if (res.status == 200) {
-          this.closeDelete()
-        } else {
-          alert(res.data.message)
-        }
-      })
+      await axios
+        .delete(`/api/user/${item}`)
+        .then((res) => {
+          if (res.status == 200) {
+            this.closeDelete()
+          }
+        })
+        .catch((err) => {
+          alert(err.response.data.message)
+        })
       this.getUser()
     },
     closeDelete() {
@@ -238,26 +246,32 @@ export default {
         }
         if (form.ID == '') {
           // New User
-          await axios.post('/api/user', data).then((res) => {
-            if (res.status == 200) {
-              alert('เพิ่มข้อมูลสำเร็จ')
-              this.resetData()
-              this.dialog = false
-            } else {
-              alert(res.data.message)
-            }
-          })
+          await axios
+            .post('/api/user', data)
+            .then((res) => {
+              if (res.status == 200) {
+                alert('เพิ่มข้อมูลสำเร็จ')
+                this.resetData()
+                this.dialog = false
+              }
+            })
+            .catch((err) => {
+              alert(err.response.data.message)
+            })
         } else {
           // Update User
-          await axios.put(`/api/user/${form.ID}`, data).then((res) => {
-            if (res.status == 200) {
-              alert('แก้ไขข้อมูลสำเร็จ')
-              this.resetData()
-              this.dialog = false
-            } else {
-              alert(res.data.message)
-            }
-          })
+          await axios
+            .put(`/api/user/${form.ID}`, data)
+            .then((res) => {
+              if (res.status == 200) {
+                alert('แก้ไขข้อมูลสำเร็จ')
+                this.resetData()
+                this.dialog = false
+              }
+            })
+            .catch((err) => {
+              alert(err.response.data.message)
+            })
         }
         await this.getUser()
         this.loading = false

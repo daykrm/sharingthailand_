@@ -23,11 +23,15 @@ export default {
 
     // Plugins to run before rendering page (https://go.nuxtjs.dev/config-plugins)
     plugins: [
-        '@/plugins/croppa.js'
+        '@/plugins/croppa.js',
+        '@/plugins/datetimepicker.js'
     ],
 
     // Auto import components (https://go.nuxtjs.dev/config-components)
-    components: true,
+    components: [{
+        path: '~/pages/Marketing/Components/',
+        prefix: 'marketing'
+      },],
 
     // Modules for dev and build (recommended) (https://go.nuxtjs.dev/config-modules)
     buildModules: [

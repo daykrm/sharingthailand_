@@ -8,6 +8,7 @@
 
 <script>
 export default {
+  name:'login_layout',
   data() {
     return {
       clipped: false,

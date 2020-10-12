@@ -10,7 +10,12 @@
           <v-col cols="6">
             <div class="mobile-dark">
               <div class="bg-mobile">
-                <div class="bg-header" v-bind:style="{ backgroundColor : app_color.color ? app_color.color : selectColor}">
+                <div
+                  class="bg-header"
+                  v-bind:style="{
+                    backgroundColor: app_color,
+                  }"
+                >
                   <div class="pa-1">
                     <v-img
                       lazy-src="http://via.placeholder.com/30x40"
@@ -20,7 +25,13 @@
                   </div>
                 </div>
                 <v-img v-if="mockImg" :src="mockImg"></v-img>
-                <div class="text-center bg-footer" v-bind:style="{ backgroundColor : app_color.color ? app_color.color : selectColor}">asdasda</div>
+                <div
+                  class="text-center bg-footer"
+                  v-bind:style="{
+                    backgroundColor: app_color,
+                  }"
+                >
+                </div>
               </div>
               <!-- place your image here, inside the mobile wrapper -->
               <!-- <img src="http://via.placeholder.com/315x100" /> -->
@@ -34,15 +45,14 @@
           ></v-img> -->
           <v-col cols="4" @keyup.enter="submitData">
             <v-col cols="12">
-              <v-select
-                :items="items"
+              <v-color-picker
+                class="ma-2"
+                show-swatches
+                canvas-height="80px"
+                swatches-max-height="70px"
                 v-model="app_color"
-                item-text="color"
-                item-value="theme_id"
-                label="เลือกสี"
-                ref="app_color"
-                return-object
-              ></v-select>
+                value="app_color"
+              ></v-color-picker>
             </v-col>
             <v-col cols="12">
               <v-text-field
@@ -53,15 +63,12 @@
               ></v-text-field>
             </v-col>
             <v-col cols="12">
-              <v-textarea
-                outlined
+              <v-text-field
                 label="ที่อยู่"
-                value=""
                 v-model="address"
                 ref="address"
-                auto-grow
                 clearable
-              ></v-textarea>
+              ></v-text-field>
             </v-col>
             <v-col cols="12">
               <v-text-field
@@ -94,7 +101,7 @@
         <v-row>
           <v-spacer></v-spacer>
           <v-btn @click="submitData" type="submit">บันทึก</v-btn>
-          <v-btn class="mx-5">ยกเลิก</v-btn>
+          <v-btn class="mx-5" @click="getCompanySetting">ยกเลิก</v-btn>
           <v-spacer></v-spacer>
         </v-row>
       </v-col>
@@ -119,11 +126,11 @@ export default {
       imagePreviewUrl: null,
       hasImg: false,
       mockImg: '',
-      selectColor : ''
+      selectColor: '',
+      test: '',
     }
   },
   mounted() {
-    this.getTheme()
     this.getCompanySetting()
     this.getMockImg()
     //this.test()
@@ -144,7 +151,7 @@ export default {
     },
     getTheme() {
       axios.get('/api/theme').then((res) => {
-        console.log(res.data);
+        console.log(res.data)
         this.items = res.data
       })
     },
@@ -157,8 +164,6 @@ export default {
         this.phone = res.data.data.phone
         this.email = res.data.data.email
         this.img_logo = null
-        this.imagePreviewUrl = `data:image/png;base64,${res.data.logoURL}`
-        this.tmpImg = `data:image/png;base64,${res.data.logoURL}`
         if (
           res.data.data.logo == '' ||
           res.data.data.logo == null ||
@@ -167,10 +172,9 @@ export default {
           this.hasImg = false
         } else {
           this.hasImg = true
+          this.imagePreviewUrl = `data:image/png;base64,${res.data.logoURL}`
+          this.tmpImg = `data:image/png;base64,${res.data.logoURL}`
         }
-        axios.get(`/api/theme/${res.data.data.theme_id}`).then(color=>{
-        this.selectColor = color.data
-      })
       })
     },
     validate() {
@@ -209,19 +213,22 @@ export default {
         })
       const data = {
         company_name: this.company_name,
-        theme_id: this.app_color.theme_id,
+        theme_id: this.app_color,
         images: this.imgPath,
         address: this.address,
         phone: this.phone,
         email: this.email,
       }
-      axios.put(`/api/company/${this.db}`, data).then((res) => {
-        if (res.status == 200) {
-          alert('แก้ไขข้อมูลสำเร็จ')
-        } else {
-          alert(res.data.message)
-        }
-      })
+      axios
+        .put(`/api/company/${this.db}`, data)
+        .then((res) => {
+          if (res.status == 200) {
+            alert('แก้ไขข้อมูลสำเร็จ')
+          }
+        })
+        .catch((err) => {
+          alert(err.response.data.message)
+        })
     },
     async submitData() {
       if (this.validate()) {
@@ -272,8 +279,8 @@ export default {
 }
 .bg-mobile {
   background-color: #f0f0f0;
-  width: 267px;
-  height: 542px;
+  width: 317px;
+  height: 620px;
 }
 .bg-header {
   background-color: #ff0000;

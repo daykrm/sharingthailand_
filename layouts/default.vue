@@ -89,12 +89,45 @@ export default {
         {
           icon: 'mdi-account-plus-outline',
           title: 'ตั้งค่าพนักงาน',
-          to: '/User/Marketing',
+          to: '/User/Company/Marketing',
         },
         {
           icon: 'mdi-cog-outline',
-          title: 'ตั้งค่าบัญชีผู้ใช้',
-          to: '/User',
+          title: 'ตั้งค่ารหัสผ่าน',
+          to: '/User/Company/edit',
+        },
+        {
+          icon: 'mdi-logout',
+          title: 'Logout',
+          action: 'logout',
+          //to: '/',
+        },
+      ],
+      MarketingItems: [
+        {
+          icon: 'mdi-monitor-dashboard',
+          title: 'Dashboard',
+          to: '/Marketing',
+        },
+        {
+          icon: 'mdi-order-bool-ascending-variant',
+          title: 'จัดการออเดอร์',
+          to: '/User/Company',
+        },
+        {
+          icon: 'mdi-history',
+          title: 'ประวัติการจัดส่งสินค้า',
+          to: '/User/Company/Marketing',
+        },
+        {
+          icon: 'mdi-cube-outline',
+          title: 'จัดการสินค้า',
+          to: '/User/Company/Marketing',
+        },
+        {
+          icon: 'mdi-cog-outline',
+          title: 'ตั้งค่ารหัสผ่าน',
+          to: '/User/Company/edit',
         },
         {
           icon: 'mdi-logout',
@@ -115,11 +148,19 @@ export default {
       if (this.isAdmin == 1) {
         this.MenuItems = this.AdminItems
       } else {
-        this.MenuItems = this.UserItems
+        var status = this.$cookies.get('user_status')
+        if(status){
+          this.MenuItems = this.UserItems
+        }
+        else{
+          this.MenuItems = this.MarketingItems
+        }
       }
     },
     logout() {
       this.$cookies.remove('isAdmin')
+      this.$cookies.remove('user_id')
+      this.$cookies.remove('user_status')
       this.$router.push({ path: '/login' })
     },
     menuActionClick(action) {

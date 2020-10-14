@@ -107,7 +107,7 @@ export default {
         {
           icon: 'mdi-monitor-dashboard',
           title: 'Dashboard',
-          to: '/Marketing',
+          to: '/Marketing/Campaign',
         },
         {
           icon: 'mdi-order-bool-ascending-variant',
@@ -122,7 +122,7 @@ export default {
         {
           icon: 'mdi-cube-outline',
           title: 'จัดการสินค้า',
-          to: '/User/Company/Marketing',
+          to: '/Marketing/Product',
         },
         {
           icon: 'mdi-cog-outline',

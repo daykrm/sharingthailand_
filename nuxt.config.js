@@ -24,7 +24,8 @@ export default {
     // Plugins to run before rendering page (https://go.nuxtjs.dev/config-plugins)
     plugins: [
         '@/plugins/croppa.js',
-        '@/plugins/datetimepicker.js'
+        '@/plugins/datetimepicker.js',
+        '@/plugins/upload.js'
     ],
 
     // Auto import components (https://go.nuxtjs.dev/config-components)

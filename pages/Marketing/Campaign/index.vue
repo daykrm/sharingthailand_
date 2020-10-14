@@ -27,7 +27,7 @@ export default {
   },
   methods: {
     createCampaign(){
-        this.$router.push({path:'/marketing/create'})
+        this.$router.push({path:'/Marketing/Campaign/create'})
     },
     thai_date_and_time() {
       var d = this.now.getDate()

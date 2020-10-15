@@ -1,6 +1,7 @@
 <template>
   <div>
     <v-row>
+      <v-overlay :value="loading" :absolute="absolute"></v-overlay>
       <v-col cols="12" class="text-center">เพิ่มสินค้า</v-col>
       <v-col cols="12">
         <v-row>
@@ -77,7 +78,7 @@
             ></v-text-field>
           </v-col>
           <v-col cols="12">
-            <v-text-field label="รายละเอียด"></v-text-field>
+            <v-text-field v-model="details" label="รายละเอียด"></v-text-field>
           </v-col>
           <v-col cols="12">
             ลักษณะสินค้า
@@ -222,22 +223,64 @@ export default {
           'รูปสินค้าต้องมีขนาดไม่เกิน 2 MB!',
       ],
       productAttr: [],
-      product_name: '',
-      allData : []
+      product_name: 'testName',
+      details: '',
+      allData: [],
+      parent_id: 1,
     }
   },
-  mounted() {
+  async mounted() {
+    this.parent_id = await this.$route.params.parent_id
     this.getCat()
     this.getAttr()
   },
   methods: {
     mergeData() {
-        //alert('ok')
-        this.productAttr.forEach(val => {
-            val.selectTerm.forEach(select => {
-                this.allData.push({ name : '',term : select })
+      this.loading = true
+      var totalRows = 1
+      var Success = 0
+      this.productAttr.forEach((val) => {
+        totalRows = totalRows * val.selectTerm.length
+      })
+      axios
+        .delete(`/api/product/relation/${this.db}/${this.parent_id}`)
+        .then(async (res) => {
+          await this.productAttr.forEach((val) => {
+            val.selectTerm.forEach((term) => {
+              axios
+                .post(`/api/product/relation/${this.db}`, {
+                  parent_id: this.parent_id,
+                  term_taxonomy_id: term.term_taxonomy_id,
+                })
+                .then((result) => {
+                  Success = 1
+                })
+                .catch((err) => {
+                  alert('บันทึกล้มเหลว Error: ', err.response.data.message)
+                  return
+                })
             })
+          })
         })
+        .catch((error) => {
+          alert('บันทึกล้มเหลว Error : ', err.response.data.message)
+          return
+        })
+      alert('บันทึกสำเร็จ')
+      this.loading = false
+    },
+    updateProduct() {
+      const data = {
+        name: this.product_name,
+        details: this.details,
+        sell_price: 0,
+        cost: 0,
+      }
+    },
+    getProduct() {
+      axios.get(`/api/product/${this.db}/${this.parent_id}`).then((res) => {
+        console.log(res.data)
+      })
     },
     selectAll(attr) {
       if (attr.selectTerm.length == attr.data.length) {
@@ -304,8 +347,11 @@ export default {
       axios
         .get(`/api/product/term/${this.db}/${term}`)
         .then((res) => {
-          console.log(res.data)
-          this.productAttr.push(res.data)
+          if (
+            this.productAttr.filter((e) => e.term === res.data.term).length == 0
+          ) {
+            this.productAttr.push(res.data)
+          }
         })
         .catch((err) => {
           //this.productAttr.push

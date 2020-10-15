@@ -106,6 +106,7 @@
                 chips
                 deletable-chips
                 clearable
+                return-object
                 v-model="attr.selectTerm"
               >
                 <template v-slot:prepend-item>
@@ -132,19 +133,32 @@
             </v-col>
           </v-col>
           <v-col cols="12">
-            <v-simple-table v-if="productAttr.length != 0">
+            <v-simple-table v-if="productAttr.length != 0||allData.length != 0">
               <template v-slot:default>
                 <thead>
                   <tr>
                     <th class="text-center">ชื่อสินค้า</th>
                     <th class="text-center">SKU</th>
-                    <template v-for="attr in productAttr">
-                      <th :key="attr.term">{{ attr.term }}</th>
+                    <template v-for="attr in productAttrs">
+                      <th class="text-center" :key="attr.term">
+                        {{ attr.term }}
+                      </th>
                     </template>
                     <th class="text-center">ต้นทุน</th>
                     <th class="text-center">ราคาขาย</th>
                   </tr>
                 </thead>
+                <tbody>
+                  <tr v-for="(data, i) in allData" :key="i">
+                    <td class="text-center">{{ data.name }}</td>
+                    <td class="text-center">{{ data.SKU }}</td>
+                    <template v-for="(attr, key) in data.Attr">
+                      <td class="text-center" :key="key">{{ attr }}</td>
+                    </template>
+                    <td class="text-center">{{ data.cost }}</td>
+                    <td class="text-center">{{ data.sell_price }}</td>
+                  </tr>
+                </tbody>
                 <tbody></tbody>
               </template>
             </v-simple-table>
@@ -152,7 +166,7 @@
         </v-row>
       </v-col>
       <v-col class="text-center">
-        <v-btn color="primary"> บันทึก </v-btn>
+        <v-btn color="primary" @click="test"> บันทึก </v-btn>
         <v-btn @click="cancel">ยกเลิก</v-btn>
       </v-col>
     </v-row>
@@ -202,6 +216,11 @@ export default {
       if (this.selectSomeCategory) return 'mdi-minus-box'
       return 'mdi-checkbox-blank-outline'
     },
+    productAttrs: function () {
+      return this.productAttr.filter((val) => {
+        return val.selectTerm.length > 0
+      })
+    },
   },
   data() {
     return {
@@ -235,38 +254,117 @@ export default {
     this.getAttr()
   },
   methods: {
+    test() {
+      //   this.allData[0] = { name: 'testname' }
+      //   console.log(this.allData)
+      //   this.allData[0].attr = ['test1']
+      //   this.allData[0].attr.splice(1,0,'test2')
+      //   console.log(this.allData)
+      //console.log(this.allData[0].attr)
+    },
     mergeData() {
       this.loading = true
+      this.allData = []
       var totalRows = 1
+      var totalAttr = 0
       var Success = 0
+      var item = 0
+      var items = 0
       this.productAttr.forEach((val) => {
-        totalRows = totalRows * val.selectTerm.length
+        if (val.selectTerm.length != 0) {
+          totalAttr += 1
+          totalRows = totalRows * val.selectTerm.length
+        }
       })
-      axios
-        .delete(`/api/product/relation/${this.db}/${this.parent_id}`)
-        .then(async (res) => {
-          await this.productAttr.forEach((val) => {
-            val.selectTerm.forEach((term) => {
-              axios
-                .post(`/api/product/relation/${this.db}`, {
-                  parent_id: this.parent_id,
-                  term_taxonomy_id: term.term_taxonomy_id,
-                })
-                .then((result) => {
-                  Success = 1
-                })
-                .catch((err) => {
-                  alert('บันทึกล้มเหลว Error: ', err.response.data.message)
-                  return
-                })
-            })
+      if (totalAttr == 0) {
+        this.allData[0] = {
+          name: this.product_name,
+          SKU: '',
+          sell_price: '',
+          cost: '',
+        }
+      } else if (totalAttr == 1) {
+        this.productAttr.forEach((val) => {
+          val.selectTerm.forEach((term, i) => {
+            this.allData[i] = {
+              name: this.product_name,
+              SKU: '',
+              sell_price: '',
+              cost: '',
+              Attr: [term.name],
+            }
           })
         })
-        .catch((error) => {
-          alert('บันทึกล้มเหลว Error : ', err.response.data.message)
-          return
-        })
-      alert('บันทึกสำเร็จ')
+      } else {
+          this.productAttr.forEach((val,i)=>{
+              while(item < val.selectTerm.length){
+                  while(items < val[i+1].selectTerm.length){
+                      
+                      items++
+                  }
+                  item++
+              }
+          })
+        // for (let i = 0; i < totalAttr; i++) {
+        //   var count = this.productAttr[i].selectTerm.length
+        //   if (i + 1 < totalAttr) {
+        //     var count2 = this.productAttr[i + 1].selectTerm.length
+        //   }
+        //   for (let j = 0; j < totalRows; j++) {
+        //     while (item < count) {
+        //       if (i == 0) {
+        //         this.allData[j] = {
+        //           name: this.product_name,
+        //           SKU: '',
+        //           sell_price: '',
+        //           cost: '',
+        //           Attr: [this.productAttr[i].selectTerm[item].name],
+        //         }
+        //       } else {  
+        //         this.allData[j].Attr.push(
+        //           this.productAttr[i].selectTerm[items].name
+        //         )
+        //       }
+        //       items += 1
+        //       if (items == count2) {
+        //         item += 1
+        //         items = 0
+        //       }
+        //       break
+        //     }
+        //     if (item == count) {
+        //       item = 0
+        //       items = 0
+        //     }
+        //   }
+        // }
+      }
+
+      //   axios
+      //     .delete(`/api/product/relation/${this.db}/${this.parent_id}`)
+      //     .then(async (res) => {
+      //       await this.productAttr.forEach((val) => {
+      //         val.selectTerm.forEach((term) => {
+      //           axios
+      //             .post(`/api/product/relation/${this.db}`, {
+      //               parent_id: this.parent_id,
+      //               term_taxonomy_id: term.term_taxonomy_id,
+      //             })
+      //             .then((result) => {
+      //               Success = 1
+      //             })
+      //             .catch((err) => {
+      //               alert('บันทึกล้มเหลว Error: ', err.response.data.message)
+      //               return
+      //             })
+      //         })
+      //       })
+      //     })
+      //     .catch((error) => {
+      //       alert('บันทึกล้มเหลว Error : ', err.response.data.message)
+      //       return
+      //     })
+      //   alert('บันทึกสำเร็จ')
       this.loading = false
     },
     updateProduct() {

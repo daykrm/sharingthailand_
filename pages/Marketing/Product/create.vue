@@ -159,8 +159,8 @@
                     <td class="text-center">
                       <v-text-field v-model="data.SKU"></v-text-field>
                     </td>
-                    <template v-for="(attr, key) in data.Attr">
-                      <td class="text-center" :key="key">{{ attr }}</td>
+                    <template v-for="(attr, key) in data.attr_details">
+                      <td class="text-center" :key="key">{{ attr.name }}</td>
                     </template>
                     <td class="text-center">
                       <v-text-field v-model="data.cost"></v-text-field>
@@ -188,6 +188,7 @@
       <v-col class="text-center">
         <v-btn color="primary" @click="saveProduct"> บันทึก </v-btn>
         <v-btn @click="cancel">ยกเลิก</v-btn>
+        <v-btn @click="test" color="danger">test</v-btn>
       </v-col>
     </v-row>
     <v-dialog v-model="dialog" max-width="500px">
@@ -267,26 +268,39 @@ export default {
       allData: [],
       parent_id: 1,
       insertData: {},
+      useDraft: null,
     }
   },
   async mounted() {
     this.parent_id = (await this.$route.params.parent_id) || 0
     this.getCat()
     this.getAttr()
+    this.useDraft = await this.$route.params.draft
     if (this.$route.params.draft == 1) {
-      this.getProduct()
+      await this.getProduct()
+      this.allData.forEach((val) => {
+        val.attr_details = JSON.parse(val.attr_details)
+      })
     }
     //this.test(5)
   },
   methods: {
     async saveProduct() {
       this.loading = true
+      await axios.delete(
+        `/api/product/meta/${this.db}/category/${this.parent_id}`
+      )
+      await axios.post(`/api/product/meta/${this.db}`, {
+        parent_id: this.parent_id,
+        meta_key: 'category',
+        meta_value: this.category,
+      })
       await axios.delete(`/api/product/${this.db}/${this.parent_id}`)
       this.allData.forEach((val) => {
         this.insertData = {
           name: val.name,
           details: this.details,
-          attr_details: val.Attr,
+          attr_details: val.attr_details,
           sell_price: val.sell_price,
           cost: val.cost,
           SKU: val.SKU,
@@ -332,7 +346,7 @@ export default {
               SKU: '',
               sell_price: '',
               cost: '',
-              Attr: [term.name],
+              attr_details: [term],
               status: 1,
             }
           })
@@ -354,7 +368,7 @@ export default {
                   SKU: '',
                   sell_price: '',
                   cost: '',
-                  Attr: [val.selectTerm[item].name],
+                  attr_details: [val.selectTerm[item]],
                   status: 1,
                 }
                 items += 1
@@ -364,7 +378,7 @@ export default {
                 }
                 break
               } else {
-                this.allData[j].Attr.push(val.selectTerm[item].name)
+                this.allData[j].attr_details.push(val.selectTerm[item])
                 items += 1
                 if (items == count) {
                   item += 1
@@ -437,18 +451,28 @@ export default {
       }
     },
     async getProduct() {
-      await axios.get(`/api/product/${this.db}/${this.parent_id}`).then((res) => {
-        this.product_name = res.data[0].name
-        this.details = res.data[0].details
-        this.allData = res.data
-      })
       await axios
-        .get(`/api/product/meta/${this.db}/productAttr/${this.parent_id}`)
-        .then((res) => {
-          //console.log(res.data[0].meta_value);
-          this.productAttr = JSON.parse(res.data[0].meta_value)
+        .get(`/api/product/${this.db}/${this.parent_id}`)
+        .then(async (res) => {
+          this.product_name = res.data[0].name
+          this.details = res.data[0].details
+          this.allData = res.data
+          console.log('wow', this.allData[0].attr_details.length)
+          if (this.allData[0].attr_details.length != 0) {
+            axios
+              .get(`/api/product/meta/${this.db}/productAttr/${this.parent_id}`)
+              .then((result) => {
+                //console.log(res.data[0].meta_value);
+                this.productAttr = JSON.parse(result.data[0].meta_value)
+              })
+            axios
+              .get(`/api/product/meta/${this.db}/category/${this.parent_id}`)
+              .then((result) => {
+                //console.log(res.data[0].meta_value);
+                this.category = JSON.parse(result.data[0].meta_value)
+              })
+          }
         })
-      //this.mergeData()
     },
     selectAll(attr) {
       if (attr.selectTerm.length == attr.data.length) {
@@ -468,7 +492,11 @@ export default {
         }
       })
     },
+    test() {
+      alert(this.allData[0].attr_details.length)
+    },
     cancel() {
+      this.$cookies.remove('draft')
       axios
         .delete(`/api/product/meta/${this.db}/${(this, this.parent_id)}`)
         .then((data) => {

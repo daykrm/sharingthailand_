@@ -161,6 +161,7 @@ export default {
       this.$cookies.remove('isAdmin')
       this.$cookies.remove('user_id')
       this.$cookies.remove('user_status')
+      this.$cookies.remove('draft')
       this.$router.push({ path: '/login' })
     },
     menuActionClick(action) {

@@ -45,7 +45,7 @@ export default {
       dialog: false,
       db: window.location.hostname.toString().split('.')[0],
       parent_id: 1,
-      current_id : 0,
+      current_id: 0,
       columns: [
         { text: 'ชื่อสินค้า', value: 'name', align: 'start' },
         { text: 'SKU', value: 'SKU' },
@@ -59,6 +59,7 @@ export default {
   },
   mounted() {
     this.getParentID()
+    this.current_id = this.$cookies.get('draft') || 0
   },
   methods: {
     addProduct() {
@@ -72,13 +73,13 @@ export default {
       this.insertDraft()
       this.$router.push({
         name: 'Marketing-Product-create',
-        params: { parent_id: this.parent_id,draft : 0 },
+        params: { parent_id: this.parent_id, draft: 0 },
       })
     },
     useDraft() {
       this.$router.push({
         name: 'Marketing-Product-create',
-        params: { parent_id: this.current_id,draft : 1 },
+        params: { parent_id: this.current_id, draft: 1 },
       })
     },
     getParentID() {
@@ -87,9 +88,7 @@ export default {
           this.parent_id = 1
         } else {
           this.parent_id += res.data.parent_id
-          this.current_id = res.data.parent_id
         }
-        console.log(this.parent_id)
       })
     },
     insertDraft() {
@@ -101,7 +100,12 @@ export default {
         SKU: '',
         status: 0,
         parent_id: this.parent_id,
+        attr_details: [],
       }
+      this.$cookies.set('draft', this.parent_id, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7,
+      })
       axios
         .post(`/api/product/${this.db}`, data)
         .then((res) => {

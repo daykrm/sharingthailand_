@@ -133,7 +133,9 @@
             </v-col>
           </v-col>
           <v-col cols="12">
-            <v-simple-table v-if="productAttr.length != 0||allData.length != 0">
+            <v-simple-table
+              v-if="productAttr.length != 0 || allData.length != 0"
+            >
               <template v-slot:default>
                 <thead>
                   <tr>
@@ -166,7 +168,7 @@
         </v-row>
       </v-col>
       <v-col class="text-center">
-        <v-btn color="primary" @click="test"> บันทึก </v-btn>
+        <v-btn color="primary" @click="test2"> บันทึก </v-btn>
         <v-btn @click="cancel">ยกเลิก</v-btn>
       </v-col>
     </v-row>
@@ -252,15 +254,22 @@ export default {
     this.parent_id = await this.$route.params.parent_id
     this.getCat()
     this.getAttr()
+    //this.test(5)
   },
   methods: {
-    test() {
-      //   this.allData[0] = { name: 'testname' }
-      //   console.log(this.allData)
-      //   this.allData[0].attr = ['test1']
-      //   this.allData[0].attr.splice(1,0,'test2')
-      //   console.log(this.allData)
-      //console.log(this.allData[0].attr)
+    test(n, i = 0) {
+      if (n == 1) {
+        var count = 0
+        this.productAttr[i].selectTerm.forEach((val) => {
+          this.allData[count] = { name: this.product_name, Attr: [val.name] }
+          count += 1
+        })
+      }
+    },
+    test2() {
+      var n = this.productAttr.length
+      console.log('n : ', n)
+      this.test(n)
     },
     mergeData() {
       this.loading = true
@@ -270,6 +279,7 @@ export default {
       var Success = 0
       var item = 0
       var items = 0
+      var count = 0
       this.productAttr.forEach((val) => {
         if (val.selectTerm.length != 0) {
           totalAttr += 1
@@ -296,75 +306,75 @@ export default {
           })
         })
       } else {
-          this.productAttr.forEach((val,i)=>{
-              while(item < val.selectTerm.length){
-                  while(items < val[i+1].selectTerm.length){
-                      
-                      items++
+        this.productAttr.forEach((val, i) => {
+          if (i == 0) {
+            count = totalRows / val.selectTerm.length
+            console.log()
+          } else {
+            count = count / val.selectTerm.length
+            console.log(count)
+          }
+          for (let j = 0; j < totalRows; j++) {
+            while (item < val.selectTerm.length) {
+              if (i == 0) {
+                this.allData[j] = {
+                  name: this.product_name,
+                  SKU: '',
+                  sell_price: '',
+                  cost: '',
+                  Attr: [val.selectTerm[item].name],
+                }
+                items += 1
+                if (items == count) {
+                  item += 1
+                  items = 0
+                }
+                break
+              } else {
+                this.allData[j].Attr.push(val.selectTerm[item].name)
+                items += 1
+                if (items == count) {
+                  item += 1
+                  items = 0
+                  if (item == val.selectTerm.length) {
+                    item = 0
                   }
-                  item++
+                }
+
+                break
               }
-          })
-        // for (let i = 0; i < totalAttr; i++) {
-        //   var count = this.productAttr[i].selectTerm.length
-        //   if (i + 1 < totalAttr) {
-        //     var count2 = this.productAttr[i + 1].selectTerm.length
-        //   }
-        //   for (let j = 0; j < totalRows; j++) {
-        //     while (item < count) {
-        //       if (i == 0) {
-        //         this.allData[j] = {
-        //           name: this.product_name,
-        //           SKU: '',
-        //           sell_price: '',
-        //           cost: '',
-        //           Attr: [this.productAttr[i].selectTerm[item].name],
-        //         }
-        //       } else {  
-        //         this.allData[j].Attr.push(
-        //           this.productAttr[i].selectTerm[items].name
-        //         )
-        //       }
-        //       items += 1
-        //       if (items == count2) {
-        //         item += 1
-        //         items = 0
-        //       }
-        //       break
-        //     }
-        //     if (item == count) {
-        //       item = 0
-        //       items = 0
-        //     }
-        //   }
-        // }
+            }
+          }
+          item = 0
+          items = 0
+        })
       }
 
-      //   axios
-      //     .delete(`/api/product/relation/${this.db}/${this.parent_id}`)
-      //     .then(async (res) => {
-      //       await this.productAttr.forEach((val) => {
-      //         val.selectTerm.forEach((term) => {
-      //           axios
-      //             .post(`/api/product/relation/${this.db}`, {
-      //               parent_id: this.parent_id,
-      //               term_taxonomy_id: term.term_taxonomy_id,
-      //             })
-      //             .then((result) => {
-      //               Success = 1
-      //             })
-      //             .catch((err) => {
-      //               alert('บันทึกล้มเหลว Error: ', err.response.data.message)
-      //               return
-      //             })
-      //         })
-      //       })
-      //     })
-      //     .catch((error) => {
-      //       alert('บันทึกล้มเหลว Error : ', err.response.data.message)
-      //       return
-      //     })
-      //   alert('บันทึกสำเร็จ')
+      axios
+        .delete(`/api/product/relation/${this.db}/${this.parent_id}`)
+        .then(async (res) => {
+          await this.productAttr.forEach((val) => {
+            val.selectTerm.forEach((term) => {
+              axios
+                .post(`/api/product/relation/${this.db}`, {
+                  parent_id: this.parent_id,
+                  term_taxonomy_id: term.term_taxonomy_id,
+                })
+                .then((result) => {
+                  Success = 1
+                })
+                .catch((err) => {
+                  alert('บันทึกล้มเหลว Error: ', err.response.data.message)
+                  return
+                })
+            })
+          })
+        })
+        .catch((error) => {
+          alert('บันทึกล้มเหลว Error : ', err.response.data.message)
+          return
+        })
+      alert('บันทึกสำเร็จ')
       this.loading = false
     },
     updateProduct() {

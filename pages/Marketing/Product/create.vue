@@ -129,7 +129,7 @@
               </v-select>
             </v-row>
             <v-col class="text-center">
-              <v-btn @click="mergeData">บันทึกลักษณะสินค้า</v-btn>
+              <v-btn @click="saveAttr">บันทึกลักษณะสินค้า</v-btn>
             </v-col>
           </v-col>
           <v-col cols="12">
@@ -148,17 +148,35 @@
                     </template>
                     <th class="text-center">ต้นทุน</th>
                     <th class="text-center">ราคาขาย</th>
+                    <th class="text-center">สถานะ</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="(data, i) in allData" :key="i">
-                    <td class="text-center">{{ data.name }}</td>
-                    <td class="text-center">{{ data.SKU }}</td>
+                    <td class="text-center">
+                      <v-text-field v-model="data.name"></v-text-field>
+                    </td>
+                    <td class="text-center">
+                      <v-text-field v-model="data.SKU"></v-text-field>
+                    </td>
                     <template v-for="(attr, key) in data.Attr">
                       <td class="text-center" :key="key">{{ attr }}</td>
                     </template>
-                    <td class="text-center">{{ data.cost }}</td>
-                    <td class="text-center">{{ data.sell_price }}</td>
+                    <td class="text-center">
+                      <v-text-field v-model="data.cost"></v-text-field>
+                    </td>
+                    <td class="text-center">
+                      <v-text-field v-model="data.sell_price"></v-text-field>
+                    </td>
+                    <td class="text-center">
+                      <v-switch
+                        v-model="data.status"
+                        color="success"
+                        hide-details
+                        :false-value="0"
+                        :true-value="1"
+                      ></v-switch>
+                    </td>
                   </tr>
                 </tbody>
                 <tbody></tbody>
@@ -168,7 +186,7 @@
         </v-row>
       </v-col>
       <v-col class="text-center">
-        <v-btn color="primary" @click="test2"> บันทึก </v-btn>
+        <v-btn color="primary" @click="saveProduct"> บันทึก </v-btn>
         <v-btn @click="cancel">ยกเลิก</v-btn>
       </v-col>
     </v-row>
@@ -248,38 +266,51 @@ export default {
       details: '',
       allData: [],
       parent_id: 1,
+      insertData: {},
     }
   },
   async mounted() {
-    this.parent_id = await this.$route.params.parent_id
+    this.parent_id = (await this.$route.params.parent_id) || 0
     this.getCat()
     this.getAttr()
+    if (this.$route.params.draft == 1) {
+      this.getProduct()
+    }
     //this.test(5)
   },
   methods: {
-    test(n, i = 0) {
-      if (n == 1) {
-        var count = 0
-        this.productAttr[i].selectTerm.forEach((val) => {
-          this.allData[count] = { name: this.product_name, Attr: [val.name] }
-          count += 1
-        })
-      }
-    },
-    test2() {
-      var n = this.productAttr.length
-      console.log('n : ', n)
-      this.test(n)
+    async saveProduct() {
+      this.loading = true
+      await axios.delete(`/api/product/${this.db}/${this.parent_id}`)
+      this.allData.forEach((val) => {
+        this.insertData = {
+          name: val.name,
+          details: this.details,
+          attr_details: val.Attr,
+          sell_price: val.sell_price,
+          cost: val.cost,
+          SKU: val.SKU,
+          status: val.status,
+          parent_id: this.parent_id,
+        }
+        axios
+          .post(`/api/product/${this.db}`, this.insertData)
+          .then((res) => {})
+          .catch((err) => {
+            alert('บันทึกล้มเหลว Error : ', err.response.data.message)
+            return
+          })
+      })
+      await alert('เพิ่มข้อมูลสำเร็จ')
+      this.loading = false
     },
     mergeData() {
-      this.loading = true
-      this.allData = []
       var totalRows = 1
       var totalAttr = 0
-      var Success = 0
       var item = 0
       var items = 0
       var count = 0
+      this.allData = []
       this.productAttr.forEach((val) => {
         if (val.selectTerm.length != 0) {
           totalAttr += 1
@@ -302,6 +333,7 @@ export default {
               sell_price: '',
               cost: '',
               Attr: [term.name],
+              status: 1,
             }
           })
         })
@@ -323,6 +355,7 @@ export default {
                   sell_price: '',
                   cost: '',
                   Attr: [val.selectTerm[item].name],
+                  status: 1,
                 }
                 items += 1
                 if (items == count) {
@@ -349,28 +382,46 @@ export default {
           items = 0
         })
       }
-
+    },
+    saveAttr() {
+      this.loading = true
+      var Success = 0
+      this.mergeData()
       axios
-        .delete(`/api/product/relation/${this.db}/${this.parent_id}`)
-        .then(async (res) => {
-          await this.productAttr.forEach((val) => {
-            val.selectTerm.forEach((term) => {
-              axios
-                .post(`/api/product/relation/${this.db}`, {
-                  parent_id: this.parent_id,
-                  term_taxonomy_id: term.term_taxonomy_id,
+        .delete(`/api/product/meta/${this.db}/productAttr/${this.parent_id}`)
+        .then((data) => {
+          axios
+            .delete(`/api/product/relation/${this.db}/${this.parent_id}`)
+            .then(async (res) => {
+              await axios.post(`/api/product/meta/${this.db}`, {
+                parent_id: this.parent_id,
+                meta_key: 'productAttr',
+                meta_value: this.productAttr,
+              })
+              console.log(this.productAttr)
+              await this.productAttr.forEach((val) => {
+                val.selectTerm.forEach((term) => {
+                  axios
+                    .post(`/api/product/relation/${this.db}`, {
+                      parent_id: this.parent_id,
+                      term_taxonomy_id: term.term_taxonomy_id,
+                    })
+                    .then((result) => {
+                      Success = 1
+                    })
+                    .catch((err) => {
+                      alert('บันทึกล้มเหลว Error: ', err.response.data.message)
+                      return
+                    })
                 })
-                .then((result) => {
-                  Success = 1
-                })
-                .catch((err) => {
-                  alert('บันทึกล้มเหลว Error: ', err.response.data.message)
-                  return
-                })
+              })
             })
-          })
+            .catch((error) => {
+              alert('บันทึกล้มเหลว Error : ', err.response.data.message)
+              return
+            })
         })
-        .catch((error) => {
+        .catch((errs) => {
           alert('บันทึกล้มเหลว Error : ', err.response.data.message)
           return
         })
@@ -385,10 +436,19 @@ export default {
         cost: 0,
       }
     },
-    getProduct() {
-      axios.get(`/api/product/${this.db}/${this.parent_id}`).then((res) => {
-        console.log(res.data)
+    async getProduct() {
+      await axios.get(`/api/product/${this.db}/${this.parent_id}`).then((res) => {
+        this.product_name = res.data[0].name
+        this.details = res.data[0].details
+        this.allData = res.data
       })
+      await axios
+        .get(`/api/product/meta/${this.db}/productAttr/${this.parent_id}`)
+        .then((res) => {
+          //console.log(res.data[0].meta_value);
+          this.productAttr = JSON.parse(res.data[0].meta_value)
+        })
+      //this.mergeData()
     },
     selectAll(attr) {
       if (attr.selectTerm.length == attr.data.length) {
@@ -409,7 +469,28 @@ export default {
       })
     },
     cancel() {
-      this.$router.go(-1)
+      axios
+        .delete(`/api/product/meta/${this.db}/${(this, this.parent_id)}`)
+        .then((data) => {
+          axios
+            .delete(`/api/product/relation/${this.db}/${this.parent_id}`)
+            .then((res) => {
+              axios
+                .delete(`/api/product/${this.db}/${this.parent_id}`)
+                .then((response) => {
+                  this.$router.go(-1)
+                })
+                .catch((err) => {
+                  this.$router.go(-1)
+                })
+            })
+            .catch((error) => {
+              this.$router.go(-1)
+            })
+        })
+        .catch((errs) => {
+          this.$router.go(-1)
+        })
     },
     close() {
       this.catName = ''

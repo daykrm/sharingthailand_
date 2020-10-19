@@ -17,6 +17,7 @@
                 chips
                 deletable-chips
                 clearable
+                ref="category"
                 label="เลือกประเภทสินค้า"
               >
                 <template v-slot:prepend-item>
@@ -41,8 +42,21 @@
             </v-row>
           </v-col>
           <v-col cols="12">
+            <v-row v-if="savedImg.length" class="text-center">
+              <v-col v-for="(img, i) in savedImg" :key="i">
+                <img
+                  v-if="img.img"
+                  :src="img.img"
+                  width="250"
+                  height="auto"
+                /><br />
+                <v-icon @click="deleteSavedImg(img.id)">mdi-close</v-icon>
+              </v-col>
+            </v-row>
+          </v-col>
+          <v-col cols="12">
             รูปสินค้า
-            <v-file-input
+            <!-- <v-file-input
               :rules="rules"
               label="รูปสินค้า"
               v-model="product_img"
@@ -65,7 +79,43 @@
                   {{ text }}
                 </v-chip>
               </template>
-            </v-file-input>
+            </v-file-input> -->
+            <v-col
+              v-show="$refs.upload && $refs.upload.dropActive"
+              class="drop-active text-center"
+            >
+              <h3>Drop files to upload</h3>
+            </v-col>
+            <v-col style="background-color: #3e3e3e" class="text-center">
+              <v-row v-if="files.length">
+                <v-col v-for="(file, index) in files" :key="index">
+                  <img
+                    v-if="file.thumb"
+                    :src="file.thumb"
+                    width="250"
+                    height="auto"
+                  /><br />
+                  <v-icon @click="deleteImg(index)">mdi-close</v-icon>
+                </v-col>
+              </v-row>
+              <file-upload
+                class="btn btn-primary"
+                post-action="/upload/post"
+                :multiple="true"
+                :drop="true"
+                :drop-directory="true"
+                :maximum="limit"
+                :value="files"
+                v-model="files"
+                @input-filter="inputFilter"
+                ref="upload"
+              >
+                <v-btn color="blue-grey" class="ma-2 white--text">
+                  เลือกไฟล์
+                  <v-icon right dark> mdi-cloud-upload </v-icon>
+                </v-btn>
+              </file-upload>
+            </v-col>
             <small
               >รูปหลักในหน้าสินค้า มากสุด 4 รูป ขนาด 330 x 330 - 5000 x 5000
               px</small
@@ -187,8 +237,8 @@
       </v-col>
       <v-col class="text-center">
         <v-btn color="primary" @click="saveProduct"> บันทึก </v-btn>
-        <v-btn @click="cancel">ยกเลิก</v-btn>
-        <v-btn @click="test" color="danger">test</v-btn>
+        <v-btn @click="cancelDialog = true">ลบสินค้า</v-btn>
+        <v-btn @click="goBack" color="danger">ย้อนกลับ</v-btn>
       </v-col>
     </v-row>
     <v-dialog v-model="dialog" max-width="500px">
@@ -220,11 +270,32 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog v-model="cancelDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <v-col class="text-center"
+            >ต้องการลบข้อมูลสินค้านี้ทั้งหมด ?</v-col
+          >
+        </v-card-title>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="teal lighten-1" @click="cancelDialog = false" text
+            >ยกเลิก</v-btn
+          >
+          <v-btn color="teal lighten-1" @click="cancel">ยืนยัน</v-btn>
+          <v-spacer></v-spacer>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script>
 import axios from 'axios'
+import FileUpload from 'vue-upload-component'
 export default {
+  components: {
+    FileUpload,
+  },
   computed: {
     selectAllCategory() {
       return this.category.length === this.categoryItems.length
@@ -242,11 +313,25 @@ export default {
         return val.selectTerm.length > 0
       })
     },
+    limit: function () {
+      if (this.savedImg.length) return 4 - this.savedImg.length
+      else return 4
+    },
+    limited: function () {
+      if (this.savedImg.length) {
+        if (this.savedImg.length == 4) {
+          return true
+        } else {
+          return false
+        }
+      }
+    },
   },
   data() {
     return {
       db: window.location.hostname.toString().split('.')[0],
       dialog: false,
+      cancelDialog: false,
       catName: '',
       catSlug: '',
       categoryItems: [],
@@ -263,18 +348,31 @@ export default {
           'รูปสินค้าต้องมีขนาดไม่เกิน 2 MB!',
       ],
       productAttr: [],
-      product_name: 'testName',
+      product_name: '',
       details: '',
-      allData: [],
+      allData: [
+        {
+          name: '',
+          SKU: '',
+          sell_price: 0,
+          cost: 0,
+          attr_details: [],
+          status: 0,
+        },
+      ],
       parent_id: 1,
       insertData: {},
       useDraft: null,
+      files: [],
+      imgPath: [],
+      savedImg: [],
     }
   },
   async mounted() {
     this.parent_id = (await this.$route.params.parent_id) || 0
     this.getCat()
     this.getAttr()
+    await this.getImg()
     this.useDraft = await this.$route.params.draft
     if (this.$route.params.draft == 1) {
       await this.getProduct()
@@ -285,8 +383,49 @@ export default {
     //this.test(5)
   },
   methods: {
+    getImg() {
+      axios
+        .get(`/api/product/img/${this.db}/img/${this.parent_id}`)
+        .then((res) => {
+          this.savedImg = res.data
+        })
+    },
+    async deleteSavedImg(index) {
+      await axios.delete(`/api/product/meta/byid/${this.db}/${index}`)
+      this.getImg()
+    },
     async saveProduct() {
+      //await this.saveAttr()
       this.loading = true
+      if (this.files.length) {
+        if (this.savedImg.length + this.files.length > 4) {
+          alert('ไม่สามารถเพิ่มรูปสินค้าได้ (มากสุด 4 รูป)')
+          this.files = []
+          this.loading = false
+          return
+        }
+        let settings = { headers: { 'content-type': 'multipart/form-data' } }
+        //await axios.delete(`/api/product/meta/${this.db}/img/${this.parent_id}`)
+        var formData = new FormData()
+        this.files.forEach(async (file, i) => {
+          await formData.append('images', file.file)
+        })
+        await axios
+          .post(`/api/upload`, formData, settings)
+          .then((res) => {
+            this.imgPath = res.data.images.split('|')
+          })
+          .catch((err) => {
+            console.log(err)
+          })
+        await this.imgPath.forEach((img) => {
+          axios.post(`/api/product/meta/${this.db}`, {
+            parent_id: this.parent_id,
+            meta_key: 'img',
+            meta_value: img,
+          })
+        })
+      }
       await axios.delete(
         `/api/product/meta/${this.db}/category/${this.parent_id}`
       )
@@ -298,7 +437,7 @@ export default {
       await axios.delete(`/api/product/${this.db}/${this.parent_id}`)
       this.allData.forEach((val) => {
         this.insertData = {
-          name: val.name,
+          name: this.product_name,
           details: this.details,
           attr_details: val.attr_details,
           sell_price: val.sell_price,
@@ -315,8 +454,10 @@ export default {
             return
           })
       })
-      await alert('เพิ่มข้อมูลสำเร็จ')
-      this.loading = false
+      await this.getImg()
+      this.files = []
+      await alert('บันทึกข้อมูลสินค้าสำเร็จ')
+      this.loading = await false
     },
     mergeData() {
       var totalRows = 1
@@ -324,77 +465,74 @@ export default {
       var item = 0
       var items = 0
       var count = 0
-      this.allData = []
       this.productAttr.forEach((val) => {
         if (val.selectTerm.length != 0) {
           totalAttr += 1
           totalRows = totalRows * val.selectTerm.length
         }
       })
-      if (totalAttr == 0) {
-        this.allData[0] = {
-          name: this.product_name,
-          SKU: '',
-          sell_price: '',
-          cost: '',
-        }
-      } else if (totalAttr == 1) {
-        this.productAttr.forEach((val) => {
-          val.selectTerm.forEach((term, i) => {
-            this.allData[i] = {
-              name: this.product_name,
-              SKU: '',
-              sell_price: '',
-              cost: '',
-              attr_details: [term],
-              status: 1,
-            }
+      if (totalAttr != 0) {
+        this.allData = []
+        if (totalAttr == 1) {
+          this.productAttr.forEach((val) => {
+            val.selectTerm.forEach((term, i) => {
+              this.allData[i] = {
+                name: this.product_name,
+                SKU: '',
+                sell_price: 0,
+                cost: 0,
+                attr_details: [term],
+                status: 1,
+              }
+            })
           })
-        })
-      } else {
-        this.productAttr.forEach((val, i) => {
-          if (i == 0) {
-            count = totalRows / val.selectTerm.length
-            console.log()
-          } else {
-            count = count / val.selectTerm.length
-            console.log(count)
-          }
-          for (let j = 0; j < totalRows; j++) {
-            while (item < val.selectTerm.length) {
-              if (i == 0) {
-                this.allData[j] = {
-                  name: this.product_name,
-                  SKU: '',
-                  sell_price: '',
-                  cost: '',
-                  attr_details: [val.selectTerm[item]],
-                  status: 1,
-                }
-                items += 1
-                if (items == count) {
-                  item += 1
-                  items = 0
-                }
-                break
-              } else {
-                this.allData[j].attr_details.push(val.selectTerm[item])
-                items += 1
-                if (items == count) {
-                  item += 1
-                  items = 0
-                  if (item == val.selectTerm.length) {
-                    item = 0
+        } else {
+          this.productAttr.forEach((val, i) => {
+            if (i == 0) {
+              count = totalRows / val.selectTerm.length
+              console.log()
+            } else {
+              count = count / val.selectTerm.length
+              console.log(count)
+            }
+            for (let j = 0; j < totalRows; j++) {
+              while (item < val.selectTerm.length) {
+                if (i == 0) {
+                  this.allData[j] = {
+                    name: this.product_name,
+                    SKU: '',
+                    sell_price: 0,
+                    cost: 0,
+                    attr_details: [val.selectTerm[item]],
+                    status: 1,
                   }
-                }
+                  items += 1
+                  if (items == count) {
+                    item += 1
+                    items = 0
+                  }
+                  break
+                } else {
+                  this.allData[j].attr_details.push(val.selectTerm[item])
+                  items += 1
+                  if (items == count) {
+                    item += 1
+                    items = 0
+                    if (item == val.selectTerm.length) {
+                      item = 0
+                    }
+                  }
 
-                break
+                  break
+                }
               }
             }
-          }
-          item = 0
-          items = 0
-        })
+            item = 0
+            items = 0
+          })
+        }
+      } else {
+        this.allData[0].name = this.product_name
       }
     },
     saveAttr() {
@@ -439,7 +577,7 @@ export default {
           alert('บันทึกล้มเหลว Error : ', err.response.data.message)
           return
         })
-      alert('บันทึกสำเร็จ')
+      //alert('บันทึกลักษณะสินค้าสำเร็จ')
       this.loading = false
     },
     updateProduct() {
@@ -492,11 +630,10 @@ export default {
         }
       })
     },
-    test() {
-      alert(this.allData[0].attr_details.length)
+    goBack() {
+      this.$router.go(-1)
     },
     cancel() {
-      this.$cookies.remove('draft')
       axios
         .delete(`/api/product/meta/${this.db}/${(this, this.parent_id)}`)
         .then((data) => {
@@ -506,18 +643,22 @@ export default {
               axios
                 .delete(`/api/product/${this.db}/${this.parent_id}`)
                 .then((response) => {
+                  this.$cookies.remove('draft')
                   this.$router.go(-1)
                 })
                 .catch((err) => {
-                  this.$router.go(-1)
+                  //this.$router.go(-1)
+                  alert('1')
                 })
             })
             .catch((error) => {
-              this.$router.go(-1)
+              //this.$router.go(-1)
+              alert('2')
             })
         })
         .catch((errs) => {
-          this.$router.go(-1)
+          //this.$router.go(-1)
+          alert(errs.response.data.message)
         })
     },
     close() {
@@ -574,6 +715,109 @@ export default {
           //this.productAttr.push
         })
     },
+    deleteImg(index) {
+      this.files.splice(index, 1)
+    },
+    inputFilter(newFile, oldFile, prevent) {
+      if (newFile && !oldFile) {
+        // Before adding a file
+        // 添加文件前
+        // Filter system files or hide files
+        // 过滤系统文件 和隐藏文件
+        if (/(\/|^)(Thumbs\.db|desktop\.ini|\..+)$/.test(newFile.name)) {
+          return prevent()
+        }
+        // Filter php html js file
+        // 过滤 php html js 文件
+        if (/\.(php5?|html?|jsx?)$/i.test(newFile.name)) {
+          return prevent()
+        }
+        // Automatic compression
+        // 自动压缩
+        if (
+          newFile.file &&
+          newFile.type.substr(0, 6) === 'image/' &&
+          this.autoCompress > 0 &&
+          this.autoCompress < newFile.size
+        ) {
+          newFile.error = 'compressing'
+          const imageCompressor = new ImageCompressor(null, {
+            convertSize: Infinity,
+            maxWidth: 512,
+            maxHeight: 512,
+          })
+          imageCompressor
+            .compress(newFile.file)
+            .then((file) => {
+              this.$refs.upload.update(newFile, {
+                error: '',
+                file,
+                size: file.size,
+                type: file.type,
+              })
+            })
+            .catch((err) => {
+              this.$refs.upload.update(newFile, {
+                error: err.message || 'compress',
+              })
+            })
+        }
+      }
+      if (newFile && (!oldFile || newFile.file !== oldFile.file)) {
+        // Create a blob field
+        // 创建 blob 字段
+        newFile.blob = ''
+        let URL = window.URL || window.webkitURL
+        if (URL && URL.createObjectURL) {
+          newFile.blob = URL.createObjectURL(newFile.file)
+        }
+        // Thumbnails
+        // 缩略图
+        newFile.thumb = ''
+        if (newFile.blob && newFile.type.substr(0, 6) === 'image/') {
+          newFile.thumb = newFile.blob
+        }
+      }
+    },
   },
 }
 </script>
+<style>
+.example-drag label.btn {
+  margin-bottom: 0;
+  margin-right: 1rem;
+}
+.example-drag .drop-active {
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  position: fixed;
+  z-index: 9999;
+  opacity: 0.6;
+  text-align: center;
+  background: #000;
+}
+.example-drag .drop-active h3 {
+  margin: -0.5em 0 0;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+  font-size: 40px;
+  color: #fff;
+  padding: 0;
+}
+.img_wrp {
+  display: inline-block;
+  position: relative;
+}
+.close {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+</style>

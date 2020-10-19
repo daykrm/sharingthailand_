@@ -21,6 +21,8 @@
     "nuxt": "^2.14.5",
     "v-uploader": "^1.8.0",
     "vue-croppa": "^1.3.8",
+    "vue-upload-component": "^2.8.20",
+    "vue-xeditable": "^1.1.2",
     "vuetify-datetime-picker": "^2.1.1"
   },
   "devDependencies": {

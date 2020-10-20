@@ -25,9 +25,40 @@ export default {
   data() {
     return { now: new Date() }
   },
+  head() {
+    return {
+      meta: [
+        {
+          property: 'og:title',
+          content: 'ทดสอบแชร์',
+        },
+        {
+          property: 'og:url',
+          content: 'https://sharingthailand.com/Marketing/Campaign',
+        },
+        {
+          property: 'og:type',
+          content: 'website',
+        },
+        {
+          property: 'og:description',
+          content: 'my description',
+        },
+        {
+          property: 'og:image',
+          content: 'http://via.placeholder.com/1200x630',
+        },
+        {
+          name: 'description',
+          content: 'my website description',
+        },
+        // other meta
+      ],
+    }
+  },
   methods: {
-    createCampaign(){
-        this.$router.push({path:'/Marketing/Campaign/create'})
+    createCampaign() {
+      this.$router.push({ path: '/Marketing/Campaign/create' })
     },
     thai_date_and_time() {
       var d = this.now.getDate()

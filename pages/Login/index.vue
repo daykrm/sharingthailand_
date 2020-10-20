@@ -8,7 +8,7 @@
               <v-toolbar color="primary" dark flat>
                 <v-toolbar-title>Sharing Thailand</v-toolbar-title>
               </v-toolbar>
-              <v-card-text @keyup.enter="userLogin">
+              <v-card-text @keyup.enter="checkLogin">
                 <v-form>
                   <v-text-field
                     label="Username"
@@ -80,22 +80,27 @@ export default {
         username: this.login.username,
         password: this.login.password,
       }
-      axios.post('/api/login', data).then((res) => {
-        if (res.data.message == 'success') {
-          this.$cookies.set('isAdmin', res.data.data, {
-            path: '/',
-            maxAge: 60 * 60 * 24 * 7,
-          })
-          this.isAdmin = this.$cookies.get('isAdmin')
-          if (this.isAdmin) {
-            this.$router.push({ path: '/admin' })
+      axios
+        .post('/api/admin/login', data)
+        .then((res) => {
+          if (res.data.message == 'success') {
+            this.$cookies.set('isAdmin', res.data.data, {
+              path: '/',
+              maxAge: 60 * 60 * 24 * 7,
+            })
+            this.isAdmin = this.$cookies.get('isAdmin')
+            if (this.isAdmin) {
+              this.$router.push({ path: '/admin' })
+            } else {
+              this.$router.push({ path: '/user' })
+            }
           } else {
-            this.$router.push({ path: '/user' })
+            alert(res.data)
           }
-        } else {
-          alert(res.data)
-        }
-      })
+        })
+        .catch((err) => {
+          alert(err.response.data.message)
+        })
     },
     userLogin() {
       const data = {
@@ -103,37 +108,40 @@ export default {
         username: this.login.username,
         password: this.login.password,
       }
-      axios.post(`/api/login/${this.db}`, data).then((res) => {
-        if (res.data.message == 'success') {
-          this.$cookies.set('isAdmin', res.data.isAdmin, {
-            path: '/',
-            maxAge: 60 * 60 * 24 * 7,
-          })
-          this.$cookies.set('user_status', res.data.status, {
-            path: '/',
-            maxAge: 60 * 60 * 24 * 7,
-          })
-          this.$cookies.set('user_id', res.data.user_id, {
-            path: '/',
-            maxAge: 60 * 60 * 24 * 7,
-          })
-          this.isAdmin = this.$cookies.get('isAdmin')
-          var status = this.$cookies.get('user_status')
-          if (this.isAdmin) {
-            this.$router.push({ path: '/Admin' })
-          } else {
-            if (status) {
-              // 1 = Client
-              this.$router.push({ path: '/user/company' })
+      axios
+        .post(`/api/login/${this.db}`, data)
+        .then((res) => {
+          if (res.data.message == 'success') {
+            this.$cookies.set('isAdmin', res.data.isAdmin, {
+              path: '/',
+              maxAge: 60 * 60 * 24 * 7,
+            })
+            this.$cookies.set('user_status', res.data.status, {
+              path: '/',
+              maxAge: 60 * 60 * 24 * 7,
+            })
+            this.$cookies.set('user_id', res.data.user_id, {
+              path: '/',
+              maxAge: 60 * 60 * 24 * 7,
+            })
+            this.isAdmin = this.$cookies.get('isAdmin')
+            var status = this.$cookies.get('user_status')
+            if (this.isAdmin) {
+              this.$router.push({ path: '/Admin' })
             } else {
-              // 0 = Marketing
-              this.$router.push({ path: '/marketing' })
+              if (status) {
+                // 1 = Client
+                this.$router.push({ path: '/user/company' })
+              } else {
+                // 0 = Marketing
+                this.$router.push({ path: '/Marketing/Campaign' })
+              }
             }
           }
-        } else {
-          alert(res.data)
-        }
-      })
+        })
+        .catch((err) => {
+          alert(err.response.data.message)
+        })
     },
     checkLogin() {
       if (this.isUser) {

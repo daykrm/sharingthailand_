@@ -11,7 +11,19 @@
         <v-col cols="12" md="7">
           <v-row>
             {{ title }}
-            <div class="fb-share-button" data-href="http://hug.lvh.me:3000/Marketing/Campaign" data-layout="button_count" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Fhug.lvh.me%3A3000%2FMarketing%2FCampaign&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+            <div
+              class="fb-share-button"
+              data-href="https://sharingthailand.com/Marketing/Campaign"
+              data-layout="button_count"
+              data-size="small"
+            >
+              <a
+                target="_blank"
+                href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Fhug.lvh.me%3A3000%2FMarketing%2FCampaign&amp;src=sdkpreparse"
+                class="fb-xfbml-parse-ignore"
+                >Share</a
+              >
+            </div>
             <v-spacer></v-spacer>
             <font style="font-size: 0.8em">สิ้นสุดใน 00d:00h:00m:00s</font>
           </v-row>

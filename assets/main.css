@@ -1,0 +1,14 @@
+.v-text-field  input {
+    font-size: 1.1em;
+}
+.v-text-field  label {
+    font-size: 1.3em;
+}
+.v-data-table-header{
+    font-size : 2em
+}
+.v-data-table > .v-data-table__wrapper > table > tbody > tr > th,
+.v-data-table > .v-data-table__wrapper > table > thead > tr > th,
+.v-data-table > .v-data-table__wrapper > table > tfoot > tr > th {
+   font-size: 20px !important;
+}

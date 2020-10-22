@@ -40,6 +40,7 @@
 
 <script>
 import axios from 'axios'
+//const axios = require('axios');
 
 export default {
   name: 'LoginComponent',
@@ -53,12 +54,14 @@ export default {
       },
       isAdmin: null,
       prefix: [],
-      db: window.location.hostname.toString().split('.')[0],
+      db: '',
       isUser: null,
     }
   },
-  mounted() {
-    this.getPrefix()
+  async mounted() {
+    this.db = await window.location.hostname.toString().split('.')[0]
+    await this.getPrefix()
+    //this.isAdmin = this.$cookies.get('draft')
   },
   methods: {
     getPrefix() {

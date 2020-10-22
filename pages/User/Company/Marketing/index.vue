@@ -151,11 +151,12 @@ export default {
       editID: '',
       loading: false,
       absolute: true,
-      db: window.location.hostname.toString().split('.')[0],
+      db: '',
     }
   },
-  mounted() {
-    this.getUser()
+  async mounted() {
+    this.db = await window.location.hostname.toString().split('.')[0]
+    await this.getUser()
   },
   methods: {
     getUser() {

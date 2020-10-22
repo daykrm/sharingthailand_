@@ -7,16 +7,14 @@ export default {
   middleware: ['isNotAuth'],
   data() {
     return {
-      db: window.location.hostname.toString().split('.')[0],
+      db: '',
     }
   },
-  mounted() {
+  async mounted() {
+    this.db = await window.location.hostname.toString().split('.')[0]
     //this.getDB()
   },
   methods: {
-    getDB() {
-      this.db = window.location.hostname.toString().split('.')[0]
-    },
   },
 }
 </script>

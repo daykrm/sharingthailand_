@@ -25,13 +25,12 @@
                         max-width="1200"
                         max-height="630"
                         :src="previewImg"
-                        lazy-src="http://via.placeholder.com/1200x630"
                       ></v-img>
                       <v-img
                         v-else
                         max-width="1200"
                         max-height="630"
-                        src="http://via.placeholder.com/1200x630"
+                        :src="savedImg"
                       ></v-img>
                       <v-card-text>
                         <div>{{ db.toUpperCase() }}.SHARINGTHAILAND.COM</div>
@@ -60,7 +59,6 @@
                         v-model="campaign_img"
                         label="ภาพ"
                         ref="campaign_img"
-                        :rules="[(v) => !!v || 'กรุณาเลือกรูปภาพ']"
                       ></v-file-input>
                     </v-col>
                     <v-col cols="12">
@@ -192,22 +190,95 @@
                       :items="promotion"
                       class="elevation-1"
                     >
-                      <template v-slot:item.actions="{ item }">
-                        <v-icon small @click="deleteItem(item)">
-                          mdi-delete
-                        </v-icon>
-                      </template>
-                      <template v-slot:item.discount="{ item }">
-                        {{ item.discount + ' ' + item.discountType }}
-                      </template>
-                      <template v-slot:item.status="{ item }">
-                        <v-switch
-                          v-model="item.status"
-                          color="success"
-                          hide-details
-                          :false-value="0"
-                          :true-value="1"
-                        ></v-switch>
+                      <template v-slot:body="{ items }">
+                        <tbody>
+                          <tr v-for="(item, i) in items" :key="i">
+                            <td>
+                              <template v-if="!item.edit">
+                                {{ item.fromNumber }}
+                              </template>
+                              <template v-else>
+                                <v-text-field
+                                  label="จาก"
+                                  v-model="item.fromNumber"
+                                ></v-text-field>
+                              </template>
+                            </td>
+                            <td>
+                              <template v-if="!item.edit">
+                                {{ item.toNumber }}
+                              </template>
+                              <template v-else>
+                                <v-text-field
+                                  label="ถึง"
+                                  v-model="item.toNumber"
+                                ></v-text-field>
+                              </template>
+                            </td>
+                            <td>
+                              <template v-if="!item.edit">
+                                {{ item.discount }}
+                              </template>
+                              <template v-else>
+                                <v-text-field
+                                  label="ลดราคา"
+                                  v-model="item.discount"
+                                ></v-text-field>
+                              </template>
+                            </td>
+                            <td>
+                              <v-radio-group
+                                v-if="item.edit"
+                                v-model="item.discountType"
+                                row
+                              >
+                                <v-radio label="บาท" value="บาท"></v-radio>
+                                <v-radio
+                                  label="เปอร์เซ็นต์"
+                                  value="เปอร์เซ็นต์"
+                                ></v-radio>
+                              </v-radio-group>
+                              <template v-else>
+                                {{ item.discountType }}
+                              </template>
+                            </td>
+                            <td>
+                              <v-switch
+                                v-model="item.status"
+                                color="success"
+                                hide-details
+                                :false-value="0"
+                                :true-value="1"
+                              ></v-switch>
+                            </td>
+                            <td>
+                              <v-icon
+                                small
+                                v-if="!item.edit"
+                                @click="editPromotion(item)"
+                              >
+                                mdi-pencil
+                              </v-icon>
+                              <v-icon
+                                small
+                                v-if="item.edit"
+                                @click="savePromotion(item)"
+                              >
+                                mdi-check
+                              </v-icon>
+                              <v-icon
+                                small
+                                v-if="item.edit"
+                                @click="editPromotion(item)"
+                              >
+                                mdi-close
+                              </v-icon>
+                              <v-icon small @click="deleteItem(item)">
+                                mdi-delete
+                              </v-icon>
+                            </td>
+                          </tr>
+                        </tbody>
                       </template>
                       <template v-slot:no-data> ไม่มีข้อมูล </template>
                     </v-data-table>
@@ -313,6 +384,7 @@ export default {
         { text: 'จาก', value: 'fromNumber', align: 'start' },
         { text: 'ถึง', value: 'toNumber' },
         { text: 'ลดราคา', value: 'discount' },
+        { text: 'หน่วย', value: 'discountType' },
         { text: 'สถานะ', value: 'status' },
         { text: 'จัดการ', value: 'actions', sortable: false },
       ],
@@ -332,49 +404,77 @@ export default {
       og_description: '',
       campaign_name: '',
       imagePath: '',
+      campaign_id: '',
+      savedImg: null,
+      tmpPromotion: [],
     }
   },
-  watch: {
-    startDate(val) {
-      if (val) {
-        this.dateProps.min = this.$refs.startDate.date
-        this.startDate = this.$refs.startDate.formattedDatetime
-        console.log(this.$refs.startDate)
-        this.$refs.endDate.clearHandler()
-      } else {
-        this.dateProps.min = null
-      }
-    },
-    campaign_img(val) {
-      if (val) {
-        this.previewImg = URL.createObjectURL(val)
-      } else {
-        this.previewImg = null
-      }
-    },
-    endDate(val) {
-      if (val) {
-        this.endDate = this.$refs.endDate.formattedDatetime
-        if (this.startDate == null) {
-          alert('กรุณาเลือกวันเริ่มแคมเปญก่อน')
-          this.$refs.endDate.clearHandler()
-        } else {
-          var check = this.endDate > this.startDate
-          if (!check) {
-            alert('กรุณาเลือกวันสิ้นสุดแคมเปญใหม่')
-            this.$refs.endDate.clearHandler()
-          }
-          console.log(check)
-        }
-      }
-    },
-  },
-  computed: {},
   async mounted() {
     this.db = await window.location.hostname.toString().split('.')[0]
+    this.campaign_id = await this.$route.params.campaign_id
+    //console.log(this.$route.params.campaign_id);
     await this.getProduct()
+    await this.getCampaign()
   },
   methods: {
+    async editPromotion(item) {
+      var i = this.promotion.indexOf(item)
+      //this.editedIndex = this.promotion.indexOf(item)
+      if (this.promotion[i].edit == 1) {
+        this.promotion = await JSON.parse(this.tmpPromotion)
+        this.promotion[i].edit = await 0
+        //console.log(this.promotion)
+      } else {
+        this.tmpPromotion = await JSON.stringify(this.promotion)
+        this.promotion[i].edit = await 1
+      }
+    },
+    async savePromotion(item) {
+      var i = this.promotion.indexOf(item)
+      console.log(item)
+      //alert(id)
+      await axios
+        .put(`/api/promotion/${this.db}`, item)
+        .then((res) => {
+          if (res.status == 200) {
+            alert('แก้ไขโปรโมชั่นสำเร็จ')
+          }
+        })
+        .catch((err) => {
+          alert('แก้ไขโปรโมชั่นล้มเหลว', err)
+        })
+      this.promotion = await JSON.parse(this.tmpPromotion)
+      this.promotion[i].edit = await 0
+    },
+    getCampaign() {
+      axios
+        .get(`/api/campaign/${this.db}/${this.campaign_id}`)
+        .then(async (res) => {
+          console.log(res.data[0])
+          this.savedImg = res.data[0].img
+          this.campaign_name = res.data[0].campaign.name
+          this.og_title = res.data[0].campaign.og_title
+          this.og_description = res.data[0].campaign.og_description
+          this.startDate = await new Date(res.data[0].campaign.start_date)
+          this.endDate = await new Date(res.data[0].campaign.end_date)
+          res.data[0].promotion.forEach((val) => {
+            this.promotion.push({
+              fromNumber: val.from_number,
+              toNumber: val.to_number,
+              discount: val.rate_money || val.rate_percent,
+              discountType: val.rate_money ? 'บาท' : 'เปอร์เซ็นต์',
+              status: val.status,
+              edit: 0,
+              promotion_id: val.promotion_id,
+            })
+          })
+          res.data[0].product.forEach((val) => {
+            this.selectProduct.push({
+              parent_id: val.product_id,
+            })
+          })
+        })
+    },
     validate() {
       this.valid = this.$refs.form.validate()
       if (this.startDate == null) {
@@ -408,6 +508,9 @@ export default {
     },
     async saveCampaign() {
       var product = []
+      this.startDate = await this.$refs.startDate.formattedDatetime
+      this.endDate = await this.$refs.endDate.formattedDatetime
+
       this.selectProduct.forEach((val) => {
         product.push(val.parent_id)
       })
@@ -415,32 +518,36 @@ export default {
       let settings = { headers: { 'content-type': 'multipart/form-data' } }
       var formData = new FormData()
       formData.append('images', this.campaign_img)
-      axios
+      await axios
         .post(`/api/upload`, formData, settings)
         .then((image) => {
-          const data = {
-            name: this.campaign_name,
-            start_date: this.startDate,
-            end_date: this.endDate,
-            campaign_img: image.data.images,
-            status: 1,
-            og_title: this.og_title,
-            og_description: this.og_description,
-            promotion: this.promotion,
-            product: product,
+          if (image.data == 'No image') {
+            alert('ok')
+          } else {
           }
-          axios
-            .post(`/api/campaign/${this.db}`, data)
-            .then((res) => {
-              if (res.status == 200) {
-                alert('สร้างแคมเปญสำเร็จ')
-                this.$router.go(-1)
-              }
-            })
-            .catch((err) => {
-              alert('ไม่สามารถสร้างแคมเปญได้ กรุณาลองใหม่ในภายหลัง')
-              this.$router.go(-1)
-            })
+          //   const data = {
+          //     name: this.campaign_name,
+          //     start_date: this.startDate,
+          //     end_date: this.endDate,
+          //     campaign_img: image.data.images,
+          //     status: 1,
+          //     og_title: this.og_title,
+          //     og_description: this.og_description,
+          //     promotion: this.promotion,
+          //     product: product,
+          //   }
+          //   axios
+          //     .post(`/api/campaign/${this.db}`, data)
+          //     .then((res) => {
+          //       if (res.status == 200) {
+          //         alert('สร้างแคมเปญสำเร็จ')
+          //         this.$router.go(-1)
+          //       }
+          //     })
+          //     .catch((err) => {
+          //       alert('ไม่สามารถสร้างแคมเปญได้ กรุณาลองใหม่ในภายหลัง')
+          //       this.$router.go(-1)
+          //     })
         })
         .catch((error) => {
           alert('ไม่สามารถสร้างแคมเปญได้ กรุณาลองใหม่ในภายหลัง')
@@ -502,5 +609,39 @@ export default {
       })
     },
   },
+  watch: {
+    startDate(val) {
+      if (val) {
+        this.dateProps.min = this.$refs.startDate.date
+        console.log(this.$refs.startDate)
+        this.$refs.endDate.clearHandler()
+      } else {
+        this.dateProps.min = null
+      }
+    },
+    campaign_img(val) {
+      if (val) {
+        this.previewImg = URL.createObjectURL(val)
+      } else {
+        this.previewImg = null
+      }
+    },
+    endDate(val) {
+      if (val) {
+        if (this.startDate == null) {
+          alert('กรุณาเลือกวันเริ่มแคมเปญก่อน')
+          this.$refs.endDate.clearHandler()
+        } else {
+          var check = this.endDate > this.startDate
+          if (!check) {
+            alert('กรุณาเลือกวันสิ้นสุดแคมเปญใหม่')
+            this.$refs.endDate.clearHandler()
+          }
+          console.log(check)
+        }
+      }
+    },
+  },
+  computed: {},
 }
 </script>

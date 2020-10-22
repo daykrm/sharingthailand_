@@ -329,7 +329,7 @@ export default {
   },
   data() {
     return {
-      db: window.location.hostname.toString().split('.')[0],
+      db: '',
       dialog: false,
       cancelDialog: false,
       catName: '',
@@ -343,9 +343,11 @@ export default {
       product_img: null,
       rules: [
         (files) =>
-          !files ||
-          !files.some((file) => file.size > 2_097_152) ||
-          'รูปสินค้าต้องมีขนาดไม่เกิน 2 MB!',
+          {
+            return !files||
+              !files.some((file) => file.size>2097152)||
+              'รูปสินค้าต้องมีขนาดไม่เกิน 2 MB!'
+          },
       ],
       productAttr: [],
       product_name: '',
@@ -369,6 +371,7 @@ export default {
     }
   },
   async mounted() {
+    this.db = await window.location.hostname.toString().split('.')[0]
     this.parent_id = (await this.$route.params.parent_id) || 0
     this.getCat()
     this.getAttr()

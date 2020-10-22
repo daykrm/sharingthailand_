@@ -114,7 +114,7 @@ export default {
   middleware: ['isNotAuth'],
   data() {
     return {
-      db: window.location.hostname.toString().split('.')[0],
+      db: '',
       items: [],
       app_color: '',
       company_name: '',
@@ -130,9 +130,10 @@ export default {
       test: '',
     }
   },
-  mounted() {
-    this.getCompanySetting()
-    this.getMockImg()
+  async mounted() {
+    this.db = await window.location.hostname.toString().split('.')[0]
+    await this.getCompanySetting()
+    await this.getMockImg()
     //this.test()
   },
   methods: {

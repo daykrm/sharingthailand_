@@ -67,7 +67,7 @@ export default {
     return {
       filter: '',
       dialog: false,
-      db: window.location.hostname.toString().split('.')[0],
+      db: '',
       parent_id: 1,
       current_id: 0,
       columns: [
@@ -83,9 +83,10 @@ export default {
       items: [],
     }
   },
-  mounted() {
-    this.getParentID()
-    this.getProduct()
+  async mounted() {
+    this.db = await window.location.hostname.toString().split('.')[0]
+    await this.getParentID()
+    await this.getProduct()
     this.current_id = this.$cookies.get('draft') || 0
   },
   methods: {

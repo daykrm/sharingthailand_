@@ -67,13 +67,14 @@ export default {
       lastname: '',
       user_id: '',
       status:'',
-      db: window.location.hostname.toString().split('.')[0],
+      db: '',
     }
   },
-  mounted() {
+  async mounted() {
+    this.db = await window.location.hostname.toString().split('.')[0]
     this.user_id = this.$cookies.get('user_id')
     this.status = this.$cookies.get('user_status')
-    this.getUser()
+    await this.getUser()
   },
   methods: {
     getUser() {

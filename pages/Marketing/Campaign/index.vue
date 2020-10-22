@@ -2,7 +2,7 @@
   <v-row no-gutters>
     <v-col cols="12">
       <v-row>
-        {{ thai_date_and_time() }}
+        
       </v-row>
     </v-col>
     <v-col cols="12" class="mt-5">
@@ -12,8 +12,21 @@
         <v-btn @click="createCampaign">+ Campaign</v-btn>
       </v-row>
     </v-col>
-    <v-col cols="12" class="mt-2">
-      <marketing-show-campaign></marketing-show-campaign>
+    <v-col cols="12" class="mt-2" v-if="campaign">
+      <template v-for="(camp, i) in campaign">
+        <marketing-show-campaign
+          :key="i"
+          :name="camp.campaign.name"
+          :id="camp.campaign.campaign_id"
+          :startDate="new Date(camp.campaign.start_date)"
+          :endDate="new Date(camp.campaign.end_date)"
+          :img="camp.img"
+          :status="camp.campaign.status"
+          :promotion="camp.promotion"
+          :product="camp.product"
+          @click.native="edit(camp.campaign.campaign_id)"
+        ></marketing-show-campaign>
+      </template>
     </v-col>
   </v-row>
 </template>
@@ -23,42 +36,28 @@ export default {
     setInterval(() => (this.now = new Date()), 1000)
   },
   data() {
-    return { now: new Date() }
+    return { now: new Date(), db: '', campaign: [] }
   },
-  head() {
-    return {
-      meta: [
-        {
-          property: 'og:title',
-          content: 'ทดสอบแชร์',
-        },
-        {
-          property: 'og:url',
-          content: 'https://sharingthailand.com/Marketing/Campaign',
-        },
-        {
-          property: 'og:type',
-          content: 'website',
-        },
-        {
-          property: 'og:description',
-          content: 'my description',
-        },
-        {
-          property: 'og:image',
-          content: 'http://via.placeholder.com/1200x630',
-        },
-        {
-          name: 'description',
-          content: 'my website description',
-        },
-        // other meta
-      ],
-    }
+  async mounted() {
+    this.db = await window.location.hostname.split('.')[0]
+    this.getCampaign()
   },
   methods: {
+    edit(id){
+      this.$router.push({name : 'Marketing-Campaign-edit' , params : { campaign_id : id }})
+    },
     createCampaign() {
       this.$router.push({ path: '/Marketing/Campaign/create' })
+    },
+    getCampaign() {
+      this.$axios
+        .get(`/campaign/${this.db}`)
+        .then((res) => {
+          this.campaign = res.data
+        })
+        .catch((err) => {
+          alert(err.response.data.message)
+        })
     },
     thai_date_and_time() {
       var d = this.now.getDate()

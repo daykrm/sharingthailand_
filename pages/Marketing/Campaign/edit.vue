@@ -244,7 +244,19 @@
                             </td>
                             <td>
                               <v-switch
+                                v-if="item.edit"
                                 v-model="item.status"
+                                class="ma-0 pa-0"
+                                color="success"
+                                hide-details
+                                :false-value="0"
+                                :true-value="1"
+                              ></v-switch>
+                              <v-switch
+                                v-else
+                                disabled
+                                v-model="item.status"
+                                class="ma-0 pa-0"
                                 color="success"
                                 hide-details
                                 :false-value="0"
@@ -352,6 +364,7 @@
 <script>
 import axios from 'axios'
 export default {
+  middleware: ['isNotAuth'],
   data() {
     return {
       db: '',
@@ -431,20 +444,31 @@ export default {
     },
     async savePromotion(item) {
       var i = this.promotion.indexOf(item)
-      console.log(item)
+      const data = {
+        promotion: item,
+      }
+      this.promotion[i].edit = 0
       //alert(id)
       await axios
-        .put(`/api/promotion/${this.db}`, item)
+        .put(`/api/promotion/${this.db}/${item.promotion_id}`, data)
         .then((res) => {
           if (res.status == 200) {
+            console.log('edit status', res.data.status)
+            this.promotion[i] = {
+              discount: res.data.rate_money || res.data.rate_percent,
+              discountType: res.data.rate_money ? 'บาท' : 'เปอร์เซ็นต์',
+              edit: 0,
+              fromNumber: res.data.from_number,
+              toNumber: res.data.to_number,
+              promotion_id: res.data.ID,
+              status: res.data.status,
+            }
             alert('แก้ไขโปรโมชั่นสำเร็จ')
           }
         })
         .catch((err) => {
           alert('แก้ไขโปรโมชั่นล้มเหลว', err)
         })
-      this.promotion = await JSON.parse(this.tmpPromotion)
-      this.promotion[i].edit = await 0
     },
     getCampaign() {
       axios
@@ -522,35 +546,57 @@ export default {
         .post(`/api/upload`, formData, settings)
         .then((image) => {
           if (image.data == 'No image') {
-            alert('ok')
+            const data = {
+              name: this.campaign_name,
+              start_date: this.startDate,
+              end_date: this.endDate,
+              //campaign_img: image.data.images,
+              status: 1,
+              og_title: this.og_title,
+              og_description: this.og_description,
+              //promotion: this.promotion,
+              product: product,
+            }
+            axios
+              .put(`/api/campaign/${this.db}/${this.campaign_id}`, data)
+              .then((res) => {
+                if (res.status == 200) {
+                  alert('แก้ไขแคมเปญสำเร็จ')
+                  this.$router.go(-1)
+                }
+              })
+              .catch((err) => {
+                alert('ไม่สามารถแก้ไขแคมเปญได้ กรุณาลองใหม่ในภายหลัง')
+                this.$router.go(-1)
+              })
           } else {
+            const data = {
+              name: this.campaign_name,
+              start_date: this.startDate,
+              end_date: this.endDate,
+              campaign_img: image.data.images,
+              status: 1,
+              og_title: this.og_title,
+              og_description: this.og_description,
+              //promotion: this.promotion,
+              product: product,
+            }
+            axios
+              .put(`/api/campaign/${this.db}/${this.campaign_id}`, data)
+              .then((res) => {
+                if (res.status == 200) {
+                  alert('แก้ไขแคมเปญสำเร็จ')
+                  this.$router.go(-1)
+                }
+              })
+              .catch((err) => {
+                alert('ไม่สามารถแก้ไขแคมเปญได้ กรุณาลองใหม่ในภายหลัง')
+                this.$router.go(-1)
+              })
           }
-          //   const data = {
-          //     name: this.campaign_name,
-          //     start_date: this.startDate,
-          //     end_date: this.endDate,
-          //     campaign_img: image.data.images,
-          //     status: 1,
-          //     og_title: this.og_title,
-          //     og_description: this.og_description,
-          //     promotion: this.promotion,
-          //     product: product,
-          //   }
-          //   axios
-          //     .post(`/api/campaign/${this.db}`, data)
-          //     .then((res) => {
-          //       if (res.status == 200) {
-          //         alert('สร้างแคมเปญสำเร็จ')
-          //         this.$router.go(-1)
-          //       }
-          //     })
-          //     .catch((err) => {
-          //       alert('ไม่สามารถสร้างแคมเปญได้ กรุณาลองใหม่ในภายหลัง')
-          //       this.$router.go(-1)
-          //     })
         })
         .catch((error) => {
-          alert('ไม่สามารถสร้างแคมเปญได้ กรุณาลองใหม่ในภายหลัง')
+          alert('ไม่สามารถแก้ไขแคมเปญได้ กรุณาลองใหม่ในภายหลัง')
           this.$router.go(-1)
           return
         })

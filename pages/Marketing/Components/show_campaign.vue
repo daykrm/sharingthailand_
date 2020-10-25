@@ -14,6 +14,7 @@
                 data-href="https://sharingthailand.com/Marketing/Campaign/"
                 data-layout="button"
                 data-size="small"
+                @click.stop=""
               >
                 <a
                   target="_blank"
@@ -56,9 +57,21 @@
                   >จำนวนสินค้าที่ร่วมรายการ {{ product.length }} ชิ้น</v-col
                 >
                 <v-spacer></v-spacer>
-                <v-col cols="4"
+                <!-- <v-col cols="4"
                   >สถานะ : {{ status ? 'เปิดใช้งาน' : 'ปิดใช้งาน' }}</v-col
-                >
+                > -->
+                <v-col cols="4">
+                  <v-switch
+                    label="สถานะ"
+                    @click.stop="updateStatus"
+                    v-model="campaign_status"
+                    color="success"
+                    hide-details
+                    class="ma-0 pa-0"
+                    :false-value="0"
+                    :true-value="1"
+                  ></v-switch>
+                </v-col>
               </v-row>
             </v-col>
           </v-row>
@@ -68,6 +81,7 @@
   </v-card>
 </template>
 <script>
+import axios from 'axios'
 export default {
   name: 'show-campaign',
   created() {
@@ -75,18 +89,37 @@ export default {
   },
   mounted() {
     this.campaign_status = this.status
+    this.db = window.location.hostname.split('.')[0]
     //console.log(this.startDate.toLocaleString("th-TH"))
   },
-  methods: {},
+  methods: {
+    updateStatus(){
+      //console.log('status',this.campaign_status);
+      //console.log('id',this.id);
+      console.log(this.db);
+      axios.put(`/api/status/${this.db}/${this.id}`,{status : this.campaign_status}).then(res=>{
+        //console.log(res.data)
+        alert('แก้ไขสถานะสำเร็จ')
+      }).catch(err => {
+        alert(err)
+      })
+    }
+  },
   data() {
     return {
       now: new Date(),
+      sw: 0,
       campaign_status: null,
+      db : ''
     }
   },
   computed: {
     time: function () {
-      return this.endDate - this.now
+      if (this.endDate > this.now) {
+        return this.endDate - this.now
+      } else {
+        return 0
+      }
     },
   },
   props: {

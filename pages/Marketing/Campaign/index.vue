@@ -32,6 +32,8 @@
 </template>
 <script>
 export default {
+  middleware: ['isNotAuth'],
+  name: 'index-campaign',
   created() {
     setInterval(() => (this.now = new Date()), 1000)
   },

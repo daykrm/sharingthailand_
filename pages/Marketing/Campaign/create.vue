@@ -281,6 +281,7 @@
 <script>
 import axios from 'axios'
 export default {
+  middleware: ['isNotAuth'],
   data() {
     return {
       db: '',

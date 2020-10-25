@@ -293,6 +293,7 @@
 import axios from 'axios'
 import FileUpload from 'vue-upload-component'
 export default {
+  middleware: ['isNotAuth'],
   components: {
     FileUpload,
   },
@@ -437,8 +438,8 @@ export default {
         meta_key: 'category',
         meta_value: this.category,
       })
-      await axios.delete(`/api/product/${this.db}/${this.parent_id}`)
-      this.allData.forEach((val) => {
+      await axios.delete(`/api/product/${this.db}/${this.parent_id}/${this.allData.length}`)
+      this.allData.forEach((val,i) => {
         this.insertData = {
           name: this.product_name,
           details: this.details,
@@ -448,6 +449,7 @@ export default {
           SKU: val.SKU,
           status: val.status,
           parent_id: this.parent_id,
+          attr_index : i
         }
         axios
           .post(`/api/product/${this.db}`, this.insertData)

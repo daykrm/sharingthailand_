@@ -177,6 +177,9 @@
                   <v-divider class="mt-2"></v-divider>
                 </template>
               </v-select>
+              <v-btn class="mt-4 ml-2" @click="initCreateTerm(attr)"
+                >เพิ่ม{{ attr.term }}</v-btn
+              >
             </v-row>
             <v-col class="text-center">
               <v-btn @click="saveAttr">บันทึกลักษณะสินค้า</v-btn>
@@ -209,7 +212,7 @@
                     <td class="text-center">
                       <v-text-field v-model="data.SKU"></v-text-field>
                     </td>
-                    <template v-for="(attr, key) in data.attr_details">
+                    <template v-for="(attr, key) in data.attr">
                       <td class="text-center" :key="key">{{ attr.name }}</td>
                     </template>
                     <td class="text-center">
@@ -248,6 +251,35 @@
           <v-col class="text-center">เพิ่มประเภทสินค้า</v-col>
         </v-card-title>
         <v-card-text>
+          <v-row @keyup.enter="createCategory">
+            <v-col cols="12">
+              <v-text-field v-model="catName" label="Name"></v-text-field>
+              <small>Name เป็นชื่อประเภทสินค้าที่ใช้แสดงบนเว็บไซต์</small>
+            </v-col>
+            <v-col cols="12">
+              <v-text-field v-model="catSlug" label="Slug"></v-text-field>
+              <small
+                >Slug เป็น URL-friendly ของชื่อ
+                กรุณาระบุเป็นภาษาอังกฤษและตัวเลขเท่านั้น</small
+              >
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="teal lighten-1" @click="close" text>ยกเลิก</v-btn>
+          <v-btn color="teal lighten-1" @click="createCategory">บันทึก</v-btn>
+          <v-spacer></v-spacer>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="termDialog" max-width="500px">
+      <v-card>
+        <v-overlay :value="loading" :absolute="absolute"></v-overlay>
+        <v-card-title>
+          <v-col class="text-center">เพิ่มลักษณะสินค้า</v-col>
+        </v-card-title>
+        <v-card-text>
           <v-row @keyup.enter="createTerm">
             <v-col cols="12">
               <v-text-field v-model="catName" label="Name"></v-text-field>
@@ -273,9 +305,7 @@
     <v-dialog v-model="cancelDialog" max-width="500px">
       <v-card>
         <v-card-title>
-          <v-col class="text-center"
-            >ต้องการลบข้อมูลสินค้านี้ทั้งหมด ?</v-col
-          >
+          <v-col class="text-center">ต้องการลบข้อมูลสินค้านี้ทั้งหมด ?</v-col>
         </v-card-title>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -332,6 +362,7 @@ export default {
     return {
       db: '',
       dialog: false,
+      termDialog: false,
       cancelDialog: false,
       catName: '',
       catSlug: '',
@@ -343,12 +374,13 @@ export default {
       category: [],
       product_img: null,
       rules: [
-        (files) =>
-          {
-            return !files||
-              !files.some((file) => file.size>2097152)||
-              'รูปสินค้าต้องมีขนาดไม่เกิน 2 MB!'
-          },
+        (files) => {
+          return (
+            !files ||
+            !files.some((file) => file.size > 2097152) ||
+            'รูปสินค้าต้องมีขนาดไม่เกิน 2 MB!'
+          )
+        },
       ],
       productAttr: [],
       product_name: '',
@@ -369,6 +401,8 @@ export default {
       files: [],
       imgPath: [],
       savedImg: [],
+      taxonomy: '',
+      editedIndex: -1,
     }
   },
   async mounted() {
@@ -424,22 +458,23 @@ export default {
           })
         await this.imgPath.forEach((img) => {
           axios.post(`/api/product/meta/${this.db}`, {
+            //วน loop เพิ่มรูปภาพใน product_meta
             parent_id: this.parent_id,
             meta_key: 'img',
             meta_value: img,
           })
         })
       }
-      await axios.delete(
-        `/api/product/meta/${this.db}/category/${this.parent_id}`
-      )
       await axios.post(`/api/product/meta/${this.db}`, {
+        //เพิ่มหรือแก้ไข category ใน product_meta
         parent_id: this.parent_id,
         meta_key: 'category',
         meta_value: this.category,
       })
-      await axios.delete(`/api/product/${this.db}/${this.parent_id}/${this.allData.length}`)
-      this.allData.forEach((val,i) => {
+      await axios.delete(
+        `/api/product/${this.db}/${this.parent_id}/${this.allData.length}`
+      ) //ลบ Product ที่เกิน
+      this.allData.forEach((val, i) => {
         this.insertData = {
           name: this.product_name,
           details: this.details,
@@ -449,10 +484,10 @@ export default {
           SKU: val.SKU,
           status: val.status,
           parent_id: this.parent_id,
-          attr_index : i
+          attr_index: i,
         }
         axios
-          .post(`/api/product/${this.db}`, this.insertData)
+          .post(`/api/product/${this.db}`, this.insertData) //วน loop เพิ่ม product
           .then((res) => {})
           .catch((err) => {
             alert('บันทึกล้มเหลว Error : ', err.response.data.message)
@@ -463,6 +498,7 @@ export default {
       this.files = []
       await alert('บันทึกข้อมูลสินค้าสำเร็จ')
       this.loading = await false
+      this.$router.go(-1)
     },
     mergeData() {
       var totalRows = 1
@@ -540,47 +576,49 @@ export default {
         this.allData[0].name = this.product_name
       }
     },
-    saveAttr() {
+    async saveAttr() {
       this.loading = true
       var Success = 0
+      var Arr = []
       this.mergeData()
-      axios
-        .delete(`/api/product/meta/${this.db}/productAttr/${this.parent_id}`)
-        .then((data) => {
-          axios
-            .delete(`/api/product/relation/${this.db}/${this.parent_id}`)
-            .then(async (res) => {
-              await axios.post(`/api/product/meta/${this.db}`, {
-                parent_id: this.parent_id,
-                meta_key: 'productAttr',
-                meta_value: this.productAttr,
-              })
-              console.log(this.productAttr)
-              await this.productAttr.forEach((val) => {
-                val.selectTerm.forEach((term) => {
-                  axios
-                    .post(`/api/product/relation/${this.db}`, {
-                      parent_id: this.parent_id,
-                      term_taxonomy_id: term.term_taxonomy_id,
-                    })
-                    .then((result) => {
-                      Success = 1
-                    })
-                    .catch((err) => {
-                      alert('บันทึกล้มเหลว Error: ', err.response.data.message)
-                      return
-                    })
+      axios.post(`/api/product/meta/${this.db}`, {
+        parent_id: this.parent_id,
+        meta_key: 'productAttr',
+        meta_value: this.productAttr,
+      })
+
+      await this.productAttr.forEach((val) => {
+        val.selectTerm.forEach((term) => {
+          Arr.push(term.term_taxonomy_id)
+        })
+      })
+
+      await axios
+        .put(`/api/product/relation/${this.db}/${this.parent_id}`, {
+          term: Arr,
+        })
+        .then(async (res) => {
+          await this.productAttr.forEach((val) => {
+            val.selectTerm.forEach((term) => {
+              //Arr.push(term.term_taxonomy_id)
+              axios
+                .post(`/api/product/relation/${this.db}`, {
+                  parent_id: this.parent_id,
+                  term_taxonomy_id: term.term_taxonomy_id,
                 })
-              })
+                .then((result) => {
+                  Success = 1
+                })
+                .catch((err) => {
+                  alert('บันทึกล้มเหลว Error: ', err.response.data.message)
+                  //return
+                })
             })
-            .catch((error) => {
-              alert('บันทึกล้มเหลว Error : ', err.response.data.message)
-              return
-            })
+          })
         })
         .catch((errs) => {
-          alert('บันทึกล้มเหลว Error : ', err.response.data.message)
-          return
+          alert('บันทึกล้มเหลว Error: ', errs.response.data.message)
+          //return
         })
       //alert('บันทึกลักษณะสินค้าสำเร็จ')
       this.loading = false
@@ -600,13 +638,20 @@ export default {
           this.product_name = res.data[0].name
           this.details = res.data[0].details
           this.allData = res.data
-          console.log('wow', this.allData[0].attr_details.length)
           if (this.allData[0].attr_details.length != 0) {
             axios
               .get(`/api/product/meta/${this.db}/productAttr/${this.parent_id}`)
-              .then((result) => {
+              .then(async (result) => {
                 //console.log(res.data[0].meta_value);
-                this.productAttr = JSON.parse(result.data[0].meta_value)
+                this.productAttr = await JSON.parse(result.data[0].meta_value)
+                await this.productAttr.forEach((val, i) => {
+                  axios
+                    .get(`/api/product/term/${this.db}/${val.data[0].taxonomy}`)
+                    .then(async (term) => {
+                      this.productAttr[i].data = await term.data.data
+                      //console.log(term.data.data)
+                    })
+                })
               })
             axios
               .get(`/api/product/meta/${this.db}/category/${this.parent_id}`)
@@ -640,13 +685,13 @@ export default {
     },
     cancel() {
       axios
-        .delete(`/api/product/meta/${this.db}/${(this, this.parent_id)}`)
+        .delete(`/api/product/meta/${this.db}/${this.parent_id}`)
         .then((data) => {
           axios
             .delete(`/api/product/relation/${this.db}/${this.parent_id}`)
             .then((res) => {
               axios
-                .delete(`/api/product/${this.db}/${this.parent_id}`)
+                .delete(`/api/product/${this.db}/${this.parent_id}/0`)
                 .then((response) => {
                   this.$cookies.remove('draft')
                   this.$router.go(-1)
@@ -669,13 +714,15 @@ export default {
     close() {
       this.catName = ''
       this.catSlug = ''
+      this.editedIndex = -1
       this.dialog = false
+      this.termDialog = false
     },
     deleteChip(index, text) {
       // Prompt here with text if required
       this.product_img.splice(index, 1)
     },
-    createTerm() {
+    createCategory() {
       this.loading = true
       const data = {
         name: this.catName,
@@ -688,6 +735,35 @@ export default {
             this.getCat()
             this.category.push(res.data.id)
             this.close()
+            this.loading = false
+          }
+        })
+        .catch((err) => {
+          alert(err.response.data.message)
+        })
+    },
+    initCreateTerm(attr) {
+      this.termDialog = true
+      this.selectAttr = attr.data[0].taxonomy
+      this.editedIndex = this.productAttr.indexOf(attr)
+      //console.log('index of term',this.selectAttr);
+    },
+    createTerm() {
+      this.loading = true
+      const data = {
+        name: this.catName,
+        slug: this.catSlug,
+      }
+      axios
+        .post(`/api/product/term/${this.db}/${this.selectAttr}`, data)
+        .then(async (res) => {
+          if (res.status == 200) {
+            await axios
+              .get(`/api/product/term/${this.db}/${this.selectAttr}`)
+              .then((term) => {
+                this.productAttr[this.editedIndex].data = term.data.data
+              })
+            await this.close()
             this.loading = false
           }
         })

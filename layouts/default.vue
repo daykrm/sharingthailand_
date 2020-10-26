@@ -125,6 +125,11 @@ export default {
           to: '/Marketing/Product',
         },
         {
+          icon: 'mdi-cube-outline',
+          title: 'จัดการลักษณะสินค้า',
+          to: '/Marketing/ProductAttr',
+        },
+        {
           icon: 'mdi-cog-outline',
           title: 'ตั้งค่ารหัสผ่าน',
           to: '/User/Company/edit',

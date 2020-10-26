@@ -1,6 +1,7 @@
 <template>
   <div>
     <v-row>
+      <v-overlay :value="loading" :absolute="absolute"></v-overlay>
       <v-col cols="12" class="text-center"><h1>Campaign</h1></v-col>
       <v-col cols="12">
         <v-stepper non-linear v-model="formStep">
@@ -370,6 +371,8 @@ export default {
       db: '',
       formStep: 1,
       filter: '',
+      loading : false,
+      absolute : true,
       singleSelect: false,
       dialogDelete: false,
       editedIndex: -1,
@@ -443,6 +446,7 @@ export default {
       }
     },
     async savePromotion(item) {
+      this.loading = true
       var i = this.promotion.indexOf(item)
       const data = {
         promotion: item,
@@ -469,6 +473,7 @@ export default {
         .catch((err) => {
           alert('แก้ไขโปรโมชั่นล้มเหลว', err)
         })
+        this.loading = await false
     },
     getCampaign() {
       axios
@@ -531,6 +536,7 @@ export default {
       }
     },
     async saveCampaign() {
+      this.loading = true
       var product = []
       this.startDate = await this.$refs.startDate.formattedDatetime
       this.endDate = await this.$refs.endDate.formattedDatetime

@@ -31,10 +31,10 @@
             </v-icon>
             <!-- <v-icon small @click="deleteItem(item)"> mdi-delete </v-icon> -->
           </template>
-          <template v-slot:item.attr_data="{ item }">
-            <span v-for="(val, i) in item.attr_data" :key="i">
+          <template v-slot:item.attr="{ item }">
+            <span v-for="(val, i) in item.attr" :key="i">
               {{ val.attr_label + ' ' + val.name }}
-              <template v-if="i != item.attr_data.length - 1"> , </template>
+              <template v-if="i != item.attr.length - 1"> , </template>
             </span>
           </template>
         </v-data-table>
@@ -75,7 +75,7 @@ export default {
         { text: 'ชื่อสินค้า', value: 'name', align: 'start' },
         { text: 'SKU', value: 'SKU' },
         { text: 'รายละเอียด', value: 'details' },
-        { text: 'ลักษณะสินค้า', value: 'attr_data' },
+        { text: 'ลักษณะสินค้า', value: 'attr' },
         { text: 'ต้นทุน', value: 'cost' },
         { text: 'ราคาขาย', value: 'sell_price' },
         { text: 'สถานะ', value: 'status' },
@@ -94,10 +94,6 @@ export default {
     getProduct() {
       axios.get(`/api/product/${this.db}`).then(async (res) => {
         this.items = await res.data
-        //console.log(res.data)
-        this.items.forEach((val) => {
-          val.attr_data = JSON.parse(val.attr_details)
-        })
       })
     },
     editItem(item) {
@@ -150,6 +146,7 @@ export default {
         SKU: '',
         status: 0,
         parent_id: this.parent_id,
+        attr_index : 0,
         attr_details: [],
       }
       this.$cookies.set('draft', this.parent_id, {
